@@ -1,10 +1,6 @@
 int main(){
 
-	int x = 5;
-	return f(x);
-}
+	int a = 1 + 2 * 5 + 9;
 
-int f(int a){
-
-	return a;
+	return 0;
 }

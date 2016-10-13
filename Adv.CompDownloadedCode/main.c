@@ -61,7 +61,7 @@ void print_leaf(NODE *tree, int level)
 	//printf("Type leaf: %c \n",named(tree->type));
     TOKEN *t = (TOKEN *)tree;
     int i;
-    for(i=0; i<level; i++) putchar(i+'1');
+    for(i=0; i<level; i++) putchar(' ');//putchar(i+'1');
     if (t->type == CONSTANT) printf("Value: %d\n", t->value);
     else if (t->type == STRING_LITERAL) printf("STRING_LITERAL: \"%s\"\n", t->lexeme);
     else if (t){
@@ -80,7 +80,7 @@ void print_tree0(NODE *tree, int level)
       print_leaf(tree->left, level);
     }
     else {
-      for(i=0; i<level; i++) putchar(i+'1');
+      for(i=0; i<level; i++) putchar(' ');//putchar(i+'1');
       printf("Type: %s\n", named(tree->type));
 /*       if (tree->type=='~') { */
 /*         for(i=0; i<level+2; i++) putchar(' '); */
@@ -88,18 +88,30 @@ void print_tree0(NODE *tree, int level)
 /*       } */
 /*       else */
 
-      	for(i=0; i<level; i++) putchar(i+'1');
-      	printf("LEFT: %s\n", named(tree->type));
-        print_tree0(tree->left, level+1);
-        for(i=0; i<level; i++) putchar(i+'1');
-        printf("RIGHT: %s\n", named(tree->type));
-        print_tree0(tree->right, level+1);
+      	//for(i=0; i<level; i++) putchar(i+'1');
+      	//printf("LEFT: %s\n", named(tree->type));
+        print_tree0(tree->left, level+2);
+        //for(i=0; i<level; i++) putchar(i+'1');
+        //printf("RIGHT: %s\n", named(tree->type));
+        print_tree0(tree->right, level+2);
     }
 }
 
 void print_tree(NODE *tree)
 {
     print_tree0(tree, 0);
+}
+
+void print_tac(struct TacLine* first){
+
+	struct TacLine* next = first;
+
+	int level = 0;
+	while(next != NULL){
+
+		printf("%s\n",next->line);
+		next = next->nextLine;
+	}
 }
 
 extern int yydebug;
@@ -115,9 +127,11 @@ int main(int argc, char** argv)
     printf("--C COMPILER\n");
     yyparse();
     tree = ans;
-    printf("parse finished with %p\n", tree);
+    //printf("parse finished with %p\n", tree);
     //print_tree(tree);
-    printf("Answer: %d\n",interpret(tree,0));
+    //printf("Answer: %d\n",interpret(tree,0));
     //testFunc();
+    print_tac(compile(tree));
+   // test_func();
     return 0;
 }

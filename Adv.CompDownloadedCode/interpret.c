@@ -10,14 +10,26 @@
 #include "nodes.h"
 #include "C.tab.h"
 #include <string.h>
+#include "frames.h"
 
-int foundReturn;
-char* test;
 
 
 void testFunc(){
 
+	pushStack();
+    union Value value1;
+    value1.intValue = 2;
+	addSymbol("x",value1);
+	union Value value2;
+	value2.intValue = 5;
+	addSymbol("y",value2);
+	pushStack();
+	union Value value3;
+	value3.intValue = 1;
+	addSymbol("x",value3);
 
+	union Value ret = getValue("x");
+	printf("%d\n",ret.intValue);
 }
 
 int interpret(NODE* tree){
@@ -42,8 +54,6 @@ int interpret0(NODE* tree,int* answerBranch){
 
 			printf("Created Function: %s \n",function->lexeme);
 			function-> next = (TOKEN*)tree;
-
-			test = function->lexeme;
 			//TOKEN* functionCpy = lookup_token(function->lexeme);
 			//printf("EQUAL: %d %d\n",functionCpy->next == NULL,function-> next == NULL);
 		}
@@ -118,8 +128,9 @@ int evalFunction(NODE* tree){
 
 	printf("ENTER EVAL FUNCTION %s \n",((TOKEN*)tree->left->left)->lexeme);
 	TOKEN* functionBody = (TOKEN*)lookup_token(((TOKEN*)tree->left->left)->lexeme);
-
-	printf("TOKEN NEXT: %d\n",test == ((TOKEN*)tree->left->left)->lexeme);
+	///print_tree((NODE*)functionBody);
+	NODE* body = (NODE*) functionBody;
+	printf("%d\n",body->left->right->type);
 
 	return 0;
 
