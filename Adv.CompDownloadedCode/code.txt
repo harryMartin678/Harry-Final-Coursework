@@ -1,0 +1,11 @@
+int f(int a){
+
+	return a;
+}
+
+int main(){
+
+	int a = 2 * 5 + 10;
+
+	return f(a);
+}

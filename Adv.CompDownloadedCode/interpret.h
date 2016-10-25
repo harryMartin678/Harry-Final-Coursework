@@ -12,15 +12,19 @@
 
 struct TacLine{
 
-	char* line;
-	struct TacLine* nextLine;
+	int variable;
+	int operand1;
+	int isVar1;
+	int operand2;
+	int isVar2;
+	char operator;
 };
 
 int interpret(NODE* tree,int level);
-void testFunc();
 
 
 struct TacLine* compile(NODE* tree);
-void test_func();
+void compileToAssembly(NODE* tree);
+void testfunc();
 
 #endif /* INTERPRET_H_ */

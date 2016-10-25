@@ -1,6 +1,14 @@
+
+int f(int a,int b,int c,int d,int e, int s){
+
+	return a + b + c + d + e + s;
+}
+
 int main(){
 
-	int a = 1 + 2 * 5 + 9;
+	int c = 1;
+	int b = 2;
+	int a = 3;
 
-	return 0;
+	return f(c,b+b,a,c,b+b-a,c-b);
 }

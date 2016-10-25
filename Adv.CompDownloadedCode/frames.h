@@ -14,3 +14,4 @@ void pushStack();
 void popStack();
 void addSymbol(char* symbol,union Value value);
 union Value getValue(char* symbol);
+union Value backTrackValue(char* symbol);

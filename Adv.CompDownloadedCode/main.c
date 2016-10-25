@@ -102,17 +102,6 @@ void print_tree(NODE *tree)
     print_tree0(tree, 0);
 }
 
-void print_tac(struct TacLine* first){
-
-	struct TacLine* next = first;
-
-	int level = 0;
-	while(next != NULL){
-
-		printf("%s\n",next->line);
-		next = next->nextLine;
-	}
-}
 
 extern int yydebug;
 extern NODE* yyparse(void);
@@ -129,9 +118,20 @@ int main(int argc, char** argv)
     tree = ans;
     //printf("parse finished with %p\n", tree);
     //print_tree(tree);
-    //printf("Answer: %d\n",interpret(tree,0));
+   // printf("Answer: %d\n",interpret(tree,0));
     //testFunc();
-    print_tac(compile(tree));
-   // test_func();
+    //print_tac(compile(tree));
+    //compile(tree);
+   // struct TacLine tacLine;
+   // tacLine.variable = 1;
+   // tacLine.operand1 = 2;
+   // tacLine.isVar1 = 1;
+    //tacLine.operand2 = 3;
+    //tacLine.isVar2 = 0;
+    //tacLine.operator = '*';
+
+    //convertToAssembly(tacLine);
+    compileToAssembly(tree);
+    //test_func();
     return 0;
 }

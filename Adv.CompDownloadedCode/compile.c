@@ -10,136 +10,261 @@
 #include <stdlib.h>
 #include "nodes.h"
 #include "C.tab.h"
+#include "TacLineQueue.h"
 
 
-struct TacLine{
+//struct TacLine{
 
-	char* line;
-	struct TacLine* nextLine;
-};
-
-struct EquationState{
-
-	char* variable;
-	char* operand1;
-	char* operand2;
-	char* operator;
-	struct EquationState* left;
-	struct EquationState* right;
-};
-
+	//int variable;
+	//int operand1;
+	//int isVar1;
+	//int operand2;
+	//int isVar2;
+//	char operator;
+//};
 
 typedef struct TacLine TacLine;
-typedef struct EquationState EquationState;
 
-void test_func(){
+int temp_count = 0;
+
+/*void test_func(){
 
 	char* src = "start\0";
 	char* dest = (char*)malloc(sizeof(char)*strlen(src));
-	copy(src,dest);
+	//copy(src,dest);
 	printf("%s \n",dest);
 
-}
+}*/
 
-void copy(char* src,char* dest){
 
-	strcpy(dest,src);
-}
+void printEquations(NODE* tree){
 
-char* getOperand(NODE* tree){
+	//printf("ENTER EQUATIONS %d\n",tree == NULL);
+	if(tree == NULL) return;
 
-	int value = ((TOKEN*)tree->left)->value;
-	int digits = numDigits(value);
-	char* num = (char*)malloc(sizeof(char)*digits);
-	itoa(value,num,10);
-	return num;
-}
+	int recurse = 1;
 
-EquationState* parseEquation(NODE* tree){
+	if(tree->type == LEAF){
 
-	if(named(tree->type) == '+' && named(tree->type) == '-'
-			&& named(tree->type) == '*' && named(tree->type) =='/'){
+		printf("Value: %d\n",((TOKEN*)tree->left)->value);
+		recurse = 0;
 
-		EquationState* state = (EquationState*)malloc(sizeof(EquationState));
-		state->operand1 = getOperand(tree->left);
-		state->operand2 = getOperand(tree->right);
-		state->operator = named(tree->type);
-		state->variable = "x";
-		state->left = NULL;
-		state->right = NULL;
+	}else if(tree->type == '+'){
 
-		return state;
+		printf("Operator: %s\n",named(tree->type));
 
-	}else{
+	}
 
-		EquationState* left = parseEquation(tree->left);
-		EquationState* right = parseEquation(tree->right);
+	if(recurse){
 
-		EquationState* this = (EquationState*)malloc(sizeof(EquationState));
-		this->left = left;
-		this->right = right;
-
-		return this;
+		printEquations(tree->left);
+		printEquations(tree->right);
 	}
 }
 
-void printEquations(EquationState* next){
+struct TypeValue{
 
-	printf("%s %s %s %s\n",next->operand1,next->operand2,next->operator,next->variable);
-
-	if(next->left != NULL){
-
-		printEquations(next->left);
-
-	}else if(next->right != NULL){
-
-		printEquations(next->right);
-	}
-
-}
+	int value;
+	char* lexeme;
+	int type;
+};
 
 
-void compile0(NODE* tree,struct TacLine* currentLine){
+struct TypeValue compile0(NODE* tree,int tabs){
 
-	struct TacLine* tacLine = (struct TacLine*)malloc(sizeof(struct TacLine));
+	//printf("%s %d\n",named(tree->type),tabs);
+	//struct TacLine* tacLine = (struct TacLine*)malloc(sizeof(struct TacLine));
 
+	//printf("Type: %s \n",named(tree->type));
 	switch(tree->type){
 
 	case 'D':
 
 		//printf("%s \n",((TOKEN*)tree->left->right->left)->lexeme);
 		//tacLine->line = ((TOKEN*)tree->left->right->left)->lexeme;
-		tacLine->line = "main:";
-		compile0(tree->right,tacLine);
+		//tacLine->line = "main:";
+		printf("main: \n");
+		compile0(tree->right,tabs+1);
 		break;
 
 	case RETURN:
 		{
-			int value = ((TOKEN*)tree->left)->value;
-			//char[] line = new char[6+numDigits(value)];
-			char* start = "\tRETURN \0";
+			//int value = ((TOKEN*)tree->left)->value;
+			struct TypeValue value = compile0(tree->left,tabs);
 
-			char* combine = (char*)malloc(strNumSize(value,strlen(start)));
-			createNumEndLine(start,value,combine);
-			tacLine->line = combine;
-			tacLine->nextLine = NULL;
+			//char[] line = new char[6+numDigits(value)];
+			char* start = "RETURN \0";
+
+			//printf("RET TYPE: %d ",value.type);
+			//printTabs(tabs);
+			if(value.type == 0){
+				printf("%s %d;\n",start,value.value);
+
+			}else if(value.type == 3){
+
+				printf("%s %s;\n",start,value.lexeme);
+			}
+
+			//char* combine = (char*)malloc(strNumSize(value,strlen(start)));
+			//createNumEndLine(start,value,combine);
+			//tacLine->line = combine;
+			//tacLine->leftLine = NULL;
+			//tacLine->rightLine = NULL;
 		}
 
 		break;
 
 	case '=':
-		printf("= \n");
-		EquationState* state = parseEquation(tree);
-		printEquations(state);
+
+		;
+		struct TypeValue a = compile0(tree->right,tabs);
+		TOKEN* variable = ((TOKEN*)tree->left->left);
+		//printTabs(tabs);
+		printSimpleAssignment(variable->lexeme,a.value,a.type == 1);
+		createSimpleInstruct(variable->lexeme,a.value,a.type == 1);
+
 		break;
+
+	case '+':
+	case '*':
+	case '-':
+	case '/':
+	case '<':
+	case '>':
+		//printf("= \n");
+		//EquationState* state = parseEquation(tree,0);
+		//printEquations(state);
+		//printEquations(tree);
+		//printTabs(tabs);
+		;
+		struct TypeValue l = compile0(tree->left,tabs);
+		struct TypeValue r = compile0(tree->right,tabs);
+		int d = genTemp();
+		printTacLine(d,tree->type,l,r);
+		createInstruction(d,l.value,l.type,r.value,r.type,tree->type);
+		struct TypeValue tv;
+		tv.value = d;
+		tv.type = 1;
+		return tv;
+
+	case IF:
+		;
+		//printTabs(tabs);
+		struct TypeValue condition = compile0(tree->left,tabs+1);
+		printf("IF t%d\n",condition.value);
+		break;
+	case LEAF:
+
+		if(tree->left->type == CONSTANT){
+			struct TypeValue v;
+			v.value = ((TOKEN*)tree->left)->value;
+			v.type = 0;
+			return v;
+
+		}else{
+
+			struct TypeValue a;
+			a.lexeme = ((TOKEN*)tree->left)->lexeme;
+			a.type = 3;
+			return a;
+		}
+
 	default:
-		//printf("SET NULL\n");
-		//free(tacLine);
-		//tacLine = NULL;
-		break;
+
+		compile0(tree->left,tabs);
+		compile0(tree->right,tabs);
 	}
 
-	currentLine->nextLine = tacLine;
+	//if(isLeft){
+	//	currentLine->leftLine = tacLine;
+	//}else{
+		//currentLine->rightLine = tacLine;
+	//}
+	struct TypeValue n;
+	n.value = 0;
+	n.type = 2;
+	return n;
+}
+
+void createSimpleInstruct(int variable,int operand1,int isVar1){
+
+	struct TacLine* line = (struct TacLine*)malloc(sizeof(struct TacLine));
+	line->variable = variable;
+	line->operand1 = operand1;
+	line->isVar1 = isVar1;
+	line->isSimple = 1;
+	line->operator = '=';
+	line->next = NULL;
+
+	addToQueue(line);
+}
+
+void createInstruction(int variable,int operand1,int isVar1, int operand2,int isVar2, char operator){
+
+	struct TacLine* line = (struct TacLine*)malloc(sizeof(struct TacLine));
+	line->variable = variable;
+	line->operand1 = operand1;
+	line->isVar1 = isVar1;
+	line->operand2 = operand2;
+	line->isVar2 = isVar2;
+	line->operator = operator;
+	line->isSimple = 0;
+	line->next = NULL;
+
+	addToQueue(line);
+}
+
+void printTabs(int tabs){
+
+	for(int t = 0; t < tabs; t++)printf("\t");
+}
+
+void printSimpleAssignment(char* var, int value, int isVar){
+
+	printf("%s = ",var);
+
+	if(isVar){
+
+		printf("t%d",value);
+
+	}else{
+
+		printf("%d",value);
+	}
+
+	printf(";\n");
+}
+
+void printTacLine(int var,char op, struct TypeValue left, struct TypeValue right){
+
+	printf("t%d = ",var);
+
+	printOperand(left);
+	printf(" %c ",op);
+	printOperand(right);
+
+	printf(";\n");
+}
+
+void printOperand(struct TypeValue operand){
+
+	if(operand.type == 1){
+
+		printf("t%d",operand.value);
+
+	}else if(operand.type == 0){
+
+		printf("%d",operand.value);
+
+	}else if(operand.type == 3){
+
+		printf("%s",operand.lexeme);
+	}
+}
+
+int genTemp(){
+
+	return ++temp_count;
 }
 
 
@@ -175,12 +300,77 @@ int numDigits(int number)
 }
 
 
+void convertToAssembly(struct TacLine* line){
+
+	char* instruct;
+	switch(line->operator){
+
+	case '+':
+		instruct = "add";
+		break;
+	case '-':
+		instruct = "sub";
+		break;
+	case '*':
+		instruct = "mul";
+		break;
+	case '/':
+		instruct = "div";
+		break;
+	case '=':
+		instruct = "load";
+		break;
+	}
+
+	printAssemInstruct(instruct,line->variable,line->operand1,line->isVar1,line->operand2,line->isVar2,
+			line->isSimple);
+}
+
+void printAssemInstruct(char* instruct,int variable, int operand1, int isVar1, int operand2, int isVar2,
+		int isSimple){
+
+	printf("%s ",instruct);
+	printAssemOperand(variable,1);
+	printAssemOperand(operand1,isVar1);
+	if(!isSimple){
+		printAssemOperand(operand2,isVar2);
+	}
+	printf("\n");
+
+}
+
+void printAssemOperand(int operand,int isVar){
+
+	if(isVar){
+
+		printf("$t%d ",operand);
+
+	}else{
+
+		printf("%d ",operand);
+	}
+}
+
+
 struct TacLine* compile(NODE* tree){
 
-	TacLine* firstLine = (TacLine*)malloc(sizeof(TacLine));
-	compile0(tree,firstLine);
+	//TacLine* firstLine = (TacLine*)malloc(sizeof(TacLine));
+	compile0(tree,0);
 
-	return firstLine->nextLine;
+	return NULL;
+}
+
+void compileToAssembly(NODE* tree){
+
+	compile0(tree,0);
+
+	printf("\n");
+
+	int i;
+	for(i = 0; i < getSize(); i++){
+
+		convertToAssembly(getElement(i));
+	}
 }
 
 

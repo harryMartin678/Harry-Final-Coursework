@@ -35,16 +35,17 @@
         </taskproperties>
         <task id="0" name="Project Proposal" meeting="false" start="2016-10-03" duration="20" complete="0" expand="true"/>
         <task id="1" name="Literature and Technology Survey" meeting="false" start="2016-10-24" duration="25" complete="0" expand="true"/>
-        <task id="3" name="Preparation for Demonstration of Progress" meeting="false" start="2017-02-13" duration="6" complete="0" expand="true"/>
-        <task id="4" name="Write Dissertation" meeting="false" start="2017-02-21" duration="60" complete="0" expand="true"/>
         <task id="8" name="Create Weapon Menu" meeting="false" start="2016-10-28" duration="12" complete="0" expand="true"/>
-        <task id="9" name="Create Server Resource and Ghoul Generator" meeting="false" start="2016-11-14" duration="35" complete="0" expand="true"/>
+        <task id="26" name="Create Inventory Screen" meeting="false" start="2016-10-28" duration="12" complete="0" expand="true"/>
+        <task id="9" name="Create Resource and Ghoul Generator on Server" meeting="false" start="2016-11-14" duration="35" complete="0" expand="true"/>
         <task id="10" name="Set up Server/Client Connection between Server and Mobile Game" meeting="false" start="2017-01-02" duration="11" complete="0" expand="true"/>
-        <task id="13" name="Set up Viritual Reality and Display Models on Overlay." meeting="false" start="2017-01-16" duration="13" complete="0" expand="true"/>
-        <task id="16" name="Implement Virtual Reality Battles" meeting="false" start="2017-02-01" duration="34" complete="0" expand="true"/>
-        <task id="20" name="Virtual Reality Resource Pick Up" meeting="false" start="2017-03-20" duration="7" complete="0" expand="true"/>
-        <task id="23" name="Create Mobile Game Map Showing Game Objects" meeting="false" start="2017-03-28" duration="10" complete="0" expand="true"/>
+        <task id="23" name="Create Mobile Game Map Showing Game Objects" meeting="false" start="2017-01-16" duration="11" complete="0" expand="true"/>
+        <task id="13" name="Set up Viritual Reality and Display Models on Overlay." meeting="false" start="2017-01-30" duration="16" complete="0" expand="true"/>
+        <task id="16" name="Implement Virtual Reality Battles" meeting="false" start="2017-02-20" duration="21" complete="0" expand="true"/>
+        <task id="20" name="Virtual Reality Resource Pick Up" meeting="false" start="2017-03-20" duration="16" complete="0" expand="true"/>
+        <task id="3" name="Preparation for Demonstration of Progress" meeting="false" start="2017-02-13" duration="6" complete="0" expand="true"/>
         <task id="25" name="Integrate all Components and Test" meeting="false" start="2017-04-10" duration="16" complete="0" expand="true"/>
+        <task id="4" name="Write Dissertation" meeting="false" start="2017-02-21" duration="54" complete="0" expand="true"/>
     </tasks>
     <resources/>
     <allocations/>
