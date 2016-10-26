@@ -1,0 +1,3411 @@
+% \iffalse meta-comment
+%<*internal>
+\iffalse
+%</internal>
+%<*bst>
+%</bst>
+%<*readme>
+# bath-bst: Harvard referencing style as recommended by the University of Bath Library
+%</readme>
+%<*internal>
+\fi
+\def\nameofplainTeX{plain}
+\ifx\fmtname\nameofplainTeX\else
+  \expandafter\begingroup
+\fi
+%</internal>
+%<*install>
+\input docstrip.tex
+\keepsilent
+\askforoverwritefalse
+
+\nopreamble\nopostamble
+
+\usedir{doc/bibtex/\jobname}
+\generate{
+  \file{README.md}{\from{\jobname.dtx}{readme}}
+  \file{\jobname.bib}{\from{\jobname.dtx}{bib}}
+}
+
+\preamble
+----------------------------------------------------------------
+bath-bst --- Harvard referencing style as recommended by the University of Bath Library
+Author:  Alex Ball
+E-mail:  a.j.ball@bath.ac.uk
+License: Released under the LaTeX Project Public License v1.3c or later
+See:     http://www.latex-project.org/lppl.txt
+----------------------------------------------------------------
+
+\endpreamble
+\postamble
+
+Copyright (C) 2016 by University of Bath
+\endpostamble
+
+\usedir{bibtex/bst/\jobname}
+\generate{
+  \file{bath.bst}{\from{\jobname.dtx}{bst}}
+}
+%</install>
+%<install>\endbatchfile
+%<*internal>
+\usedir{source/bibtex/\jobname}
+\generate{
+  \file{\jobname.ins}{\from{\jobname.dtx}{install}}
+}
+\ifx\fmtname\nameofplainTeX
+  \expandafter\endbatchfile
+\else
+  \expandafter\endgroup
+\fi
+%</internal>
+%<*driver>
+\ProvidesFile{bath-bst.dtx}
+    [2016/10/24 v1.0 Harvard referencing style as recommended by the University of Bath Library]
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[british]{babel}
+\usepackage[hmargin=3cm,vmargin=2.5cm]{geometry}
+
+% For typesetting the CJK example
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage{CJKutf8}
+\else
+  \ifLuaTeX
+    \usepackage{luatexja-fontspec}
+    \setmainjfont{IPAexGothic}
+  \else
+    \ifXeTeX
+    \usepackage{ctex}
+    \fi
+  \fi
+\fi
+
+% For typesetting the examples
+
+\usepackage{xpatch,csquotes,xcolor,xparse,multicol,fancyvrb}
+\xdefinecolor{Green}{rgb}{0,.5,0}
+\xdefinecolor{Slate}{RGB}{80,86,94}
+\xdefinecolor{BathStone}{RGB}{213,211,185}
+\colorlet{ok}{Green}
+\colorlet{bad}{red}
+\colorlet{hacked}{orange}
+\colorlet{manual}{purple}
+
+\usepackage[tightLists=false]{markdown}
+\markdownSetup{rendererPrototypes={%
+    link = {\href{#3}{#1}}%
+}}
+
+\usepackage{fontawesome}[2015/07/07]
+\newcommand{\booksym}{\makebox[1em][c]{\faicon{book}}}
+\newcommand{\cogsym}{\makebox[1em][c]{\faicon{cog}}}
+\makeatletter
+\newcommand{\hangfrom}[1]{%
+  \setbox\@tempboxa\hbox{{#1}}%
+  \hangindent \wd\@tempboxa\noindent\box\@tempboxa}
+\makeatother
+
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,breakable,skins,xparse}
+\lstdefinelanguage{bafll}%
+  { alsoletter={.}
+  , morekeywords=[2]%
+    { add.period$
+    , call.type$
+    , change.case$
+    , chr.to.int$
+    , cite$
+    , duplicate$
+    , empty$
+    , format.name$
+    , global.max$
+    , if$
+    , int.to.chr$
+    , int.to.str$
+    , missing$
+    , newline$
+    , num.names$
+    , pop$
+    , preamble$
+    , purify$
+    , quote$
+    , skip$
+    , sort.key$
+    , stack$
+    , substring$
+    , swap$
+    , text.length$
+    , text.prefix$
+    , top$
+    , type$
+    , warning$
+    , while$
+    , width$
+    , write$
+    }
+  , morekeywords=[3]%
+    { ENTRY
+    , INTEGERS
+    , STRINGS
+    , MACRO
+    , FUNCTION
+    , READ
+    , EXECUTE
+    , ITERATE
+    , SORT
+    , REVERSE
+    }
+  , morekeywords=[1]{}
+  , otherkeywords=%
+    { +
+    , -
+    , >
+    , <
+    , =
+    , *
+    , :=
+    }
+  , sensitive=true
+  , morestring=[b]"
+  , morecomment=[l]\%
+  }[keywords,strings,comments]
+\lstloadlanguages{[LaTeX]TeX,bafll}
+\lstdefinestyle{dtxlatex}%
+  { columns=fullflexible
+  , basicstyle=\ttfamily
+  , language={[LaTeX]TeX}
+  , texcsstyle=*\color{red!75!black}
+  , commentstyle=\color{gray}\itshape
+  , moretexcs=
+    { citet
+    , citep
+    , noop
+    , urlprefix
+    , urldateprefix
+    }
+  , moredelim=**[s][\color{violet}]{[}{]}
+  , moredelim=**[s][\color{blue!75!black}]{\{}{\}}
+  }
+\lstdefinestyle{dtxbst}%
+  { columns=fullflexible
+  , basicstyle=\ttfamily
+  , language=bafll
+  , keywordstyle=[1]\color{orange!75!black}
+  , keywordstyle=[2]\color{red!75!black}
+  , keywordstyle=[3]\color{green!50!black}
+  , commentstyle=\color{gray}\itshape
+  , stringstyle=\color{violet}
+  , mathescape=false
+  , showstringspaces=false
+  }
+\lstset{style=dtxlatex}
+\tcbset
+  { colframe = Slate
+  , colback = BathStone!25
+  , listing options =
+    { style = tcblatex
+    , style = dtxlatex
+    , basicstyle=\ttfamily\small
+    }
+  }
+\NewTColorBox{bibexbox}{D(){ok}d<>m}%
+  {bicolor
+  ,colframe = #1
+  ,colback = #1!5!white
+  ,colbacklower = white
+  ,fontlower = \footnotesize
+  ,before upper = {\hangfrom{\booksym\space}}
+  ,after upper = {\par\hangfrom{\cogsym\space}\bibentry{#3}.}
+  ,IfNoValueTF={#2}{}%
+    {overlay = {
+      \node[anchor=south east,text=teal] at (frame.south east) {#2};
+      }
+    }
+  }
+
+% For typesetting the implementation
+\usepackage{doc}
+\makeatletter
+\newwrite\ydocwrite
+\def\ydocfname{\jobname.listing}
+\def\ydoc@catcodes{%
+  \let\do\@makeother
+  \dospecials
+  \catcode`\\=\active
+  \catcode`\^^M=\active
+  \catcode`\ =\active
+}
+\def\macrocode{%
+  \begingroup
+  \ydoc@catcodes
+  \macro@code
+}
+\def\endmacrocode{}
+\begingroup
+\endlinechar\m@ne
+\@firstofone{%
+\catcode`\|=0\relax
+\catcode`\(=1\relax
+\catcode`\)=2\relax
+\catcode`\*=14\relax
+\catcode`\{=12\relax
+\catcode`\}=12\relax
+\catcode`\ =12\relax
+\catcode`\%=12\relax
+\catcode`\\=\active
+\catcode`\^^M=\active
+\catcode`\ =\active
+}*
+|gdef|macro@code#1^^M%    \end{macrocode}(*
+|endgroup|expandafter|macro@@code|expandafter(|ydoc@removeline#1|noexpand|lastlinemacro)*
+)*
+|gdef|ydoc@removeline#1^^M(|noexpand|firstlinemacro)*
+|gdef|ydoc@defspecialmacros(*
+|def^^M(|noexpand|newlinemacro)*
+|def (|noexpand|spacemacro)*
+|def\(|noexpand|bslashmacro)*
+)*
+|gdef|ydoc@defrevspecialmacros(*
+|def|newlinemacro(|noexpand^^M)*
+|def|spacemacro(|noexpand )*
+|def|bslashmacro(|noexpand\)*
+)*
+|endgroup
+\def\macro@@code#1{%
+  {\ydoc@defspecialmacros
+  \xdef\themacrocode{#1}}%
+  \PrintMacroCode
+  \end{macrocode}%
+}
+\def\PrintMacroCode{%
+  \begingroup
+  \let\firstlinemacro\empty
+  \let\lastlinemacro\empty
+  \def\newlinemacro{^^J}%
+  \let\bslashmacro\bslash
+  \let\spacemacro\space
+  \immediate\openout\ydocwrite=\ydocfname\relax
+  \immediate\write\ydocwrite{\themacrocode}%
+  \immediate\closeout\ydocwrite
+  \let\input\@input
+  \tcbinputlisting{enhanced,breakable,size=small,listing only,listing file=\ydocfname}%
+  \endgroup
+}
+\makeatother
+
+% Documentation
+
+\usepackage{natbib}
+\newcommand*{\urlprefix}{Available from: }
+\newcommand*{\urldateprefix}{Accessed }
+
+\usepackage{bibentry}
+\bibliographystyle{bath}
+\nobibliography*
+
+\usepackage{readprov}
+\usepackage[british,cleanlook]{isodate}
+
+\usepackage[colorlinks,citecolor=black]{hyperref}
+
+\sloppy
+
+\title{bath-bst: Harvard referencing style as recommended by the University of Bath Library}
+\author{%
+  Maintainer: Alex Ball\thanks{%
+    To contact the maintainer about this package, please visit the repository
+    where the code is hosted: \url{https://github.bath.ac.uk/ab318/bathbib}.%
+  }%
+}
+\date{Package \UseVersionOf{bath-bst.dtx} --\printdateTeX{\UseDateOf{bath-bst.dtx}}}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+\begin{markdown*}{hybrid=true}
+%</driver>
+%<*driver|readme>
+
+This package provides a [BibTeX] style to format reference lists in the
+[Harvard style][bath-harvard] recommended by the University of Bath Library.
+It should be used in conjunction with [natbib] for citations.
+
+## Installation
+
+### Automated way
+
+A makefile is provided which you can use with the Make utility on
+UNIX-like systems:
+
+  * Running `make source` generates the derived files
+      - README.md
+      - bath.bst
+      - bath-bst.bib
+      - bath-bst.ins
+  * Running `make` generates the above files and also bath-bst.pdf.
+  * Running `make inst` installs the files in the user's TeX tree.
+    You can undo this with `make uninst`.
+  * Running `make install` installs the files in the local TeX tree.
+    You can undo this with `make uninstall`.
+
+### Manual way
+
+You only need to follow the first two steps if you have made your own
+changes to the .dtx file. The compiled files you need are included in
+the zip archive.
+
+ 1. Run `tex bath-bst.dtx` to generate the source files.
+ 2. Compile bath-bst.dtx with [LuaLaTeX] and BibTeX to generate the
+    documentation. You will need, among other things, the [luatexja],
+    [adobemapping] and [ipaex] packages installed; this is just for the
+    documentation, not for the BibTeX style itself.
+ 3. Move the files to your TeX tree as follows:
+      - `source/bibtex/bath-bst`:
+        bath-bst.dtx,
+        (bath-bst.ins)
+      - `bibtex/bst/bath-bst`:
+        bath.bst
+      - `doc/bibtex/bath-bst`:
+        bath-bst.pdf,
+        README.md
+
+ 4. You may then have to update your installation's file name database
+    before TeX and friends can see the files.
+
+[bath-harvard]: http://www.bath.ac.uk/library/infoskills/referencing-plagiarism/harvard-bath-style.html
+[BibTeX]: http://ctan.org/pkg/bibtex
+[natbib]: http://www.ctan.org/pkg/natbib
+[LuaLaTeX]: http://ctan.org/pkg/lualatex-doc
+[luatexja]: http://ctan.org/pkg/luatexja
+[adobemapping]: http://ctan.org/pkg/adobemapping
+[ipaex]: http://ctan.org/pkg/ipaex
+%</driver|readme>
+%<*driver>
+\end{markdown*}
+
+\section{Using the style}
+
+To use the style, add these lines to your preamble:
+
+\begin{tcblisting}{listing only}
+\usepackage{natbib}
+\newcommand*{\urlprefix}{Available from: }
+\newcommand*{\urldateprefix}{Accessed }
+\bibliographystyle{bath}
+\end{tcblisting}
+
+Remember also to specify your .bib file at the end of the document:
+
+\begin{tcblisting}{listing only}
+\bibliography{file}
+\end{tcblisting}
+
+To make a citation in the text, use the key that corresponds to the entry in your .bib file:
+
+\begin{tcblisting}{}
+While collections can be supplemented by other means \citep{williams1997edd},
+the absence of an invisible collection amongst historians is noted by
+\citet[p.556]{stieg1981inh}. It may be, as \citet{burchard1965hhl} points out,
+that they have no assistants or are reluctant to delegate\dots
+\end{tcblisting}
+
+Please refer to the documentation for \href{http://www.ctan.org/pkg/natbib}{\textsf{natbib}}
+for the full range of commands available for in-text citations.
+
+
+\section{Examples}
+
+The examples below are shown in three parts.
+The first, marked with \faBook, shows an extract from the Harvard (Bath) referencing style sheet.
+The second, marked with \faCog, shows the reference as formatted by Bib\TeX.
+The last shows how the reference was entered in the .bib file.
+
+Some examples are highlighted in
+\tcbox[colframe=hacked,colback=hacked!5!white,nobeforeafter,size=fbox,tcbox raise base]{orange}.
+This indicates that some fields have been `abused' to achieve the right effect;
+in other words, they contain information that does not conform with their intended use.
+Some others make use of the \texttt{note} and \texttt{titleaddon} fields to achieve
+the right effect, where other styles might need the information placed differently.
+Particular care should be taken with such items when switching between different styles,
+though of course any item might need adjustment to take account of differing conventions.
+
+
+\subsection{Book with author(s)}
+
+\begin{bibexbox}{rang.etal2012rdp}
+  Rang, H.P., Dale, M.M. Ritter, J.M., Flower, R.J. and Henderson, G., 2012. \emph{Rang and Dale's pharmacology}. 7th ed. Edinburgh:\@ Elsevier Churchill Livingstone.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{rang.etal2012rdp,
+  author = {Rang, H. P. and Dale, M. M. and Ritter, J. M. and Flower, R. J. and Henderson, G.},
+  year = {2012},
+  title = {Rang and {Dale's} Pharmacology},
+  edition = {7},
+  address = {Edinburgh},
+  publisher = {Elsevier Churchill Livingstone}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}{ou1972em}
+  Open University, 1972. \emph{Electricity and magnetism}. Bletchley:\@ Open University Press.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{ou1972em,
+  author = {{Open University}},
+  year = {1972},
+  title = {Electricity and Magnetism},
+  address = {Bletchley},
+  publisher = {Open University Press}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Book with editor(s) instead of author(s)}
+
+\begin{bibexbox}{rothman.etal2008me}
+  Rothman, K.J., Greenland, S. and Lash, T.L., eds., 2008. \emph{Modern epidemiology}. 3rd ed. Philadelphia, Pa.:\@ Lippincott Williams \& Wilkins.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{rothman.etal2008me,
+  editor = {Kenneth J. Rothman and Sander Greenland and Timothy L. Lash},
+  year = {2008},
+  title = {Modern Epidemiology},
+  edition = {3},
+  address = {Philadelphia, Pa.},
+  publisher = {Lippincott Williams \& Wilkins}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Book usually known by its title}
+
+\begin{bibexbox}{oed1989}
+  \emph{Oxford English dictionary}, 1989. 2nd ed. Oxford:\@ Clarendon Press.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{oed1989,
+  year = {1989},
+  title = {Oxford {English} Dictionary},
+  edition = {2},
+  address = {Oxford},
+  publisher = {Clarendon Press}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}{merckNDidx}
+  \emph{The Merck index online} [Online]. London:\@ RSC Publishing. Available from:\@ \url{http://www.rsc.org/Merck-Index} [Accessed 16/06/2016].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{merckNDidx,
+  title = {The {Merck} Index Online},
+  titleaddon = {[Online]},
+  address = {London},
+  publisher = {RSC Publishing},
+  url = {http://www.rsc.org/Merck-Index},
+  urldate = {16/06/2016}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{One chapter\slash paper from a collection in a book}
+
+\begin{bibexbox}{burchard1965hhl}
+  Burchard, J.E., 1965. How humanists use a library. In: C.F.J. Overhage and J.R. Harman, eds. \emph{Intrex: report on a planning conference and information transfer experiments}. Cambridge, Mass.: MIT Press, pp.41--87.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@incollection{burchard1965hhl,
+  author = {Burchard, J. E.},
+  year = {1965},
+  title = {How Humanists use a Library},
+  editor = {C. F. J. Overhage and J. R. Harman},
+  booktitle = {Intrex: report on a planning conference and information transfer experiments},
+  address = {Cambridge, Mass.},
+  publisher = {MIT Press},
+  pages = {41-87}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}{reid1967ptp}
+  Reid, D.R., 1967.\@ Physical testing of polymer films.\@ In:\@ S.H. Pinner, ed.\@ \emph{Modern packaging films}. London:\@ Butterworths, pp.143--183.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@incollection{reid1967ptp,
+  author = {D. R. Reid},
+  year = {1967},
+  title = {Physical Testing of Polymer Films},
+  editor = {S. H. Pinner},
+  booktitle = {Modern Packaging Films},
+  address = {London},
+  publisher = {Butterworths},
+  pages = {143-183}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Electronic book}
+
+\begin{bibexbox}{haynes2014crc}
+  Haynes, W.M., ed.\@, 2014.\@ \emph{CRC handbook of chemistry and physics} [Online].\@ 94th ed. Boca Raton, Fla.:\@ CRC Press/Taylor and Francis. Available from:\@ \url{http://www.hbcpnetbase.com} [Accessed 16/06/2016].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{haynes2014crc,
+  editor = {Haynes, W. M.},
+  year = {2014},
+  title = {{CRC} Handbook of Chemistry and Physics},
+  titleaddon = {[Online]},
+  edition = {94},
+  address = {Boca Raton, Fla.},
+  publisher = {CRC Press/Taylor and Francis},
+  url = {http://www.hbcpnetbase.com},
+  urldate = {16/06/2016}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Journal article}
+
+\begin{bibexbox}{stieg1981cer}
+  Stieg, M.F., 1981a. Continuing education and the reference librarian in the academic and research library. \emph{Library Journal}, 105(22), pp.2547--2551.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{stieg1981cer,
+  author = {Stieg, M. F.},
+  year = {1981},
+  title = {Continuing Education and the Reference Librarian in the Academic and Research Library},
+  journal = {Library Journal},
+  volume = {105},
+  number ={22},
+  pages = {2547-2551}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}{stieg1981inh}
+  Stieg, M.F., 1981b. The information needs of historians. \emph{College and research libraries}, 42(6), pp.549--560.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{stieg1981inh,
+  author = {Stieg, M. F.},
+  year = {1981},
+  title = {The Information Needs of Historians},
+  journal = {College and Research Libraries},
+  volume = {42},
+  number ={6},
+  pages = {549-560}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}{newman2010mcb}
+  Newman, R., 2010. Malaria control beyond 2010. \emph{Brit.\@ Med.\@ J.}, 341(7765), pp.157--208.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{newman2010mcb,
+  author = {Newman, R.},
+  year = {2010},
+  title = {Malaria control beyond 2010},
+  journal = {Brit.\@ Med.\@ J.},
+  volume = {341},
+  number = {7765},
+  pages = {157-208}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{E-journal article}
+
+\begin{bibexbox}(hacked){williams1997edd}
+  Williams, F., 1997. Electronic document delivery:\@ a trial in an academic library. \emph{Ariadne} [Online], 10. Available from:\@ \url{http://www.ariadne.ac.uk/issue10/edd/} [Accessed 05/12/1997].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{williams1997edd,
+  author = {Williams, F.},
+  year = {1997},
+  title = {Electronic Document Delivery: a Trial in an Academic Library},
+  journal = {Ariadne \textup{[Online]}},
+  volume = {10},
+  url = {http://www.ariadne.ac.uk/issue10/edd/},
+  urldate = {05/12/1997}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Websites}
+
+While it is normal when using Bib\TeX\ to use \texttt{misc} for websites,
+with this style you should use \texttt{electronic}, \texttt{online} or \texttt{www} instead.
+Internally these are all aliases for \texttt{manual}.
+
+\begin{bibexbox}{holland2002gci}
+  Holland, M., 2002. \emph{Guide to citing internet sources} [Online]. Poole:\@ Bournemouth University. Available from:\@ \url{http://www.bournemouth.ac.uk/library/using/guide_to_citing_internet_sourc.html} [Accessed 04/11/2002].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@online{holland2002gci,
+  author = {Holland, M.},
+  year = {2002},
+  title = {Guide to Citing Internet Sources},
+  titleaddon = {[Online]},
+  address = {Poole},
+  organization = {Bournemouth University},
+  url = {http://www.bournemouth.ac.uk/library/using/guide_to_citing_internet_sourc.html},
+  urldate = {04/11/2002}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}{wiltshire2015gww}
+  Wiltshire Council, 2015. \emph{Get Wiltshire walking} [Online]. Trowbridge:\@ Wiltshire Council. Available from:\@ \url{http://www.wiltshire.gov.uk/leisureandrecreation/sportphysicalactivity/getwiltshirewalking.html} [Accessed 19/08/2015].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@online{wiltshire2015gww,
+  author = {{Wiltshire Council}},
+  year = {2015},
+  title = {Get {Wiltshire} walking},
+  titleaddon = {[Online]},
+  address = {Trowbridge},
+  organization = {Wiltshire Council},
+  url = {http://www.wiltshire.gov.uk/leisureandrecreation/sportphysicalactivity/getwiltshirewalking.html},
+  urldate = {19/08/2015}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Conference paper (when proceedings have a named editor)}
+
+\begin{bibexbox}{crawford1965oim}
+  Crawford, G.I., 1965. Oxygen in metals. In:\@ J.M.A. Lenihan AND S.J. Thompson, eds. \emph{Activation analysis:\@ proceedings of a NATO Advanced Study Institute}, 2--4 August 1964 Glasgow. London:\@ Academic Press, pp.113--118.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@inproceedings{crawford1965oim,
+  author = {Crawford, G. I.},
+  year = {1965},
+  title = {Oxygen in Metals},
+  editor = {J. M. A. Lenihan and S. J. Thompson},
+  booktitle = {Activation Analysis: Proceedings of a {NATO} {Advanced} {Study} {Institute}},
+  venue = {2--4 August 1964 Glasgow},
+  address = {London},
+  publisher = {Academic Press},
+  pages = {113-118}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Conference paper (when proceedings have no named editor or are part of a major series)}
+
+\begin{bibexbox}{soper1972rbc}
+  Soper, D., 1972. Review of bracken control experiments with asulam. \emph{Proceedings of the 11th British Weed Control Conference}, 15--17 November 1972 Brighton. Brighton:\@ University of Sussex, pp.24--31.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@inproceedings{soper1972rbc,
+  author = {Soper, D.},
+  year = {1972},
+  title = {Review of Bracken Control Experiments with Asulam},
+  booktitle = {Proceedings of the 11th {British} {Weed} {Control} {Conference}},
+  venue = {15--17 November 1972 Brighton},
+  address = {Brighton},
+  publisher = {University of Sussex},
+  pages = {24-31}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Newspaper article}
+
+\begin{bibexbox}(hacked){haurant2004bbh}
+  Haurant, S., 2004. Britain's borrowing hits £1 trillion. \emph{The Guardian}, 29 July, p.16c.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{haurant2004bbh,
+  author = {Haurant, S.},
+  year = {2004},
+  title = {Britain's Borrowing Hits \pounds 1 Trillion},
+  journal = {The Guardian},
+  volume = {29 July},
+  pages = {16c}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}(hacked){independent1992pub}
+  The Independent, 1992. Picking up the bills. \emph{The Independent}, 4 June, p.28a.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{independent1992pub,
+  author = {{The Independent}},
+  year = {1992},
+  title = {Picking Up the Bills},
+  journal = {The Independent},
+  volume = {4 June},
+  pages = {28a}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Thesis/dissertation}
+
+\begin{bibexbox}{burrell1973ist}
+  Burrell, J.G., 1973. \emph{The importance of school tours in education}. Thesis (M.A.). Queen's University, Belfast.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@mastersthesis{burrell1973ist,
+  author = {Burrell, J. G.},
+  year = {1973},
+  title = {The Importance of School Tours in Education},
+  type = {Thesis ({M.A.})},
+  school = {Queen's University, Belfast}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Report}
+
+\begin{bibexbox}{unesco1993gip}
+  UNESCO, 1993. \emph{General information programme and UNISIST}\@. Paris:\@ UNESCO, (PGI-93/WS/22).
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@techreport{unesco1993gip,
+  author = {{UNESCO}},
+  year = {1993},
+  title = {General Information Programme and {UNISIST}},
+  address = {Paris},
+  institution = {UNESCO},
+  number = {PGI-93/WS/22}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Standard}
+
+\begin{bibexbox}(hacked){bs5605:1990}
+  BS 5605:1990. \emph{Recommendations for citing and referencing published material}. BSI.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@manual{bs5605:1990,
+  author = {{BS 5605:1990}},
+  title = {Recommendations for citing and referencing published material},
+  organization = {BSI}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+You can also use \texttt{standard} as an alias for \texttt{manual}.
+
+
+\subsection{Patent}
+
+\begin{bibexbox}{pm1981opa}
+  Phillipp Morris Inc., 1981. \emph{Optical perforating apparatus and system}. European patent application 0021165A1. 1981-01-07.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@manual{pm1981opa,
+  author = {{Phillipp Morris Inc.}},
+  year = {1981},
+  title = {Optical perforating apparatus and system},
+  series = {European patent application},
+  number = {0021165A1. 1981-01-07}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+You can also use \texttt{patent} as an alias for \texttt{manual}.
+
+
+\subsection{Map}
+
+\begin{bibexbox}{andrews.dury1773wilts}
+  Andrews, J. and Dury, A., 1773. \emph{Map of Wiltshire}, 1 inch to 2 miles. Devizes:\@ Wiltshire Record Society.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{andrews.dury1773wilts,
+  author = {Andrews, J. and Dury, A.},
+  year = {1773},
+  title = {Map of {Wiltshire}},
+  series = {1 inch to 2 miles},
+  address = {Devizes},
+  publisher = {Wiltshire Record Society}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Film, video or DVD}
+
+\begin{bibexbox}{macbeth1948}
+  \emph{Macbeth}, 1948. Film.\@ Directed by Orson Welles. USA:\@ Republic Pictures.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@booklet{macbeth1948,
+  year = {1948},
+  title = {Macbeth},
+  howpublished = {Film. Directed by Orson Welles},
+  address = {USA},
+  publisher = {Republic Pictures}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+You can also use \texttt{movie} or \texttt{video} as an alias for \texttt{booklet}.
+
+
+\subsection{Streamed video}
+
+\begin{bibexbox}{moran2016sol}
+  Moran, C., 2016. \emph{Save Our Libraries} [Online]. Available from:\@ \url{https://www.youtube.com/watch?v=gKTfCz4JtVE&feature=youtu.be} [Accessed 29/04/2016]
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@online{moran2016sol,
+  author = {Moran, C.},
+  year = {2016},
+  title = {Save Our Libraries},
+  titleaddon = {[Online]},
+  url = {https://www.youtube.com/watch?v=gKTfCz4JtVE&feature=youtu.be},
+  urldate = {29/04/2016}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Television or radio broadcast}
+
+\begin{bibexbox}{rsfo2006ep5}
+  \emph{Rick Stein's French Odyssey:\@ Episode 5}, 2006. TV. BBC2, 23 August.\@ 20.30 hrs.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@booklet{rsfo2006ep5,
+  year = {2006},
+  title = {Rick {Stein's} {French} {Odyssey}: Episode 5},
+  howpublished = {TV. BBC2, 23 August. 20.30 hrs}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}{archers20060823}
+  \emph{The Archers}, 2006. Radio.\@ BBC Radio 4, 23 August.\@ 19.02 hrs.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@booklet{archers20060823,
+  year = {2006},
+  title = {The {Archers}},
+  howpublished = {Radio. BBC Radio 4, 23 August. 19.02 hrs}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+You can also use \texttt{audio} or \texttt{music} as an alias for \texttt{booklet}.
+
+
+\subsection{Music score}
+
+\begin{bibexbox}{beethoven1950symph1}
+  Beethoven, L. Van, 1950. \emph{Symphony no.1 in C, Op.21}. Harmondsworth:\@ Penguin.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{beethoven1950symph1,
+  author = {Ludwig van Beethoven},
+  year = {1950},
+  title = {Symphony no.1 in {C,} {Op.21}},
+  address = {Harmondsworth},
+  publisher = {Penguin}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Email discussion lists (jiscmail/listserv etc)}
+
+\begin{bibexbox}(hacked){clark2004euk}
+  Clark, T., 5 July 2004. A European UK Libraries Plus? \emph{Lis-link} [Online]. Available from:\@ \url{lis-link@jiscmail.ac.uk} [Accessed 30 July 2004].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{clark2004euk,
+  author = {Clark, T.},
+  year = {05/07/2004},
+  title = {A {European} {UK} {Libraries} {Plus}?},
+  journal = {Lis-link \textup{[Online]}},
+  url = {lis-link@jiscmail.ac.uk},
+  urldate = {30/07/2004}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Personal emails}
+
+\begin{bibexbox}(hacked){alston2004sah}
+  Alston, S., 19/07/2004. \emph{Society of Architectural Historians of GB}. Email to K.M. Jordan.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@unpublished{alston2004sah,
+  author = {Alston, S.},
+  year = {19/07/2004},
+  title = {Society of {Architectural} {Historians} of {GB}},
+  note = {Email to K.M. Jordan}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Preprint}
+
+\begin{bibexbox}{shah.corrick2016hsc}
+  Shah, I. and Corrick, I. 2016. \emph{How should central banks respond to non-neutral inflation expectations?} Bath:\@ University of Bath. \emph{OPUS} [Online]. Available from:\@ \url{http://opus.bath.ac.uk} [Accessed 04/05/2016].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@techreport{shah.corrick2016hsc,
+  author = {Shah, I. and Corrick, I.},
+  year = {2016},
+  title = {How should central banks respond to non-neutral inflation expectations?},
+  address = {Bath},
+  institution = {University of Bath},
+  note = {\emph{OPUS} [Online]},
+  url = {http://opus.bath.ac.uk},
+  urldate = {04/05/2016}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+
+\subsection{Work in translation}
+
+\begin{bibexbox}{aristotle2007ne}
+  Aristotle, 2007. \emph{Nicomachean ethics} (W.D. Ross. Trans.) South Dakota:\@ NuVisions.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{aristotle2007ne,
+  author = {Aristotle},
+  year = {2007},
+  title = {Nicomachean Ethics},
+  titleaddon = {(W.D. Ross. Trans.)},
+  address = {South Dakota},
+  publisher = {NuVisions}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Non-English work in the Roman alphabet}
+
+\begin{bibexbox}{esquivel2003cap}
+  Esquivel, L., 2003. \emph{Como agua para chocolate} [Like water for chocolate]. Barcelona:\@ Debolsillo.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{esquivel2003cap,
+  author = {Esquivel, L.},
+  year = {2003},
+  title = {Como Agua para Chocolate},
+  titleaddon = {[Like water for chocolate]},
+  address = {Barcelona},
+  publisher = {Debolsillo}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\begin{bibexbox}{thurfjell1975vhv}
+  Thurfjell, W., 1975. Vart har våran doktor tagit vägen? [Where has our doctor gone?] \emph{Läkartidningen} 72, p.789.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{thurfjell1975vhv,
+  author = {Thurfjell, W.},
+  year = {1975},
+  title = {Vart har våran doktor tagit vägen?},
+  titleaddon = {[Where has our doctor gone?]},
+  journal = {Läkartidningen},
+  volume = {72},
+  pages = {789}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Non-English works in non-Roman alphabets}
+
+The following example tricks Bib\TeX\ into treating the original rendering of the author's name as the `von' part of a Roman-alphabet name. This requires the use of a command that simply gobbles its argument, which you have to define yourself:
+
+\begin{tcblisting}{listing only}
+\newcommand*{\noop}[1]{}
+\end{tcblisting}
+
+For the trick to work, the argument you give to \lstinline[style=dtxlatex]|\noop| must be lowercase, but otherwise it can be anything you like.
+
+\newcommand*{\noop}[1]{}
+\begin{bibexbox}(hacked){hua1999qys1}
+  Hua, L. 華林甫, 1999.  Qingdai yilai Sanxia diqu shuihan zaihai de chubu yanjiu 清代以來三峽地區水旱災害的初步硏 [A preliminary study of floods and droughts in the Three Gorges region since the Qing dynasty], \emph{Zhongguo shehui kexue} 中國社會科學 , 1, pp.168--79.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{hua1999qys1,
+  author = {Linfu \noop{h}華林甫 Hua},
+  year = {1999},
+  title = {Qingdai yilai {Sanxia} diqu shuihan zaihai de chubu yanjiu
+    {清代以來三峽地區水旱災害的初步硏}},
+  titleaddon = {[A preliminary study of floods and droughts in the {Three} {Gorges} region since
+    the {Qing} dynasty]},
+  journal = {Zhongguo shehui kexue \textup{中國社會科學}},
+  volume = {1},
+  pages = {168-79}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+If the name is due to appear initial first (e.g.\ after `In:'), you can append the non-Roman characters to the author's surname; to do this, use inverted name order as you would for English double-barrelled names without hyphens, e.g.\ \texttt{Hua 華林甫, Linfu}.
+
+\begin{bibexbox}{hua1999qys2}
+  Hua, L., 1999. Qingdai yilai Sanxia diqu shuihan zaihai de chubu yanjiu [A preliminary study of floods and droughts in the Three Gorges region since the Qing dynasty], \emph{Zhongguo shehui kexue}, 1, pp.168--79.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@article{hua1999qys2,
+  author = {Hua, Linfu},
+  year = {1999},
+  title = {Qingdai yilai {Sanxia} diqu shuihan zaihai de chubu yanjiu},
+  titleaddon = {[A preliminary study of floods and droughts in the {Three} {Gorges} region since
+    the {Qing} dynasty]},
+  journal = {Zhongguo shehui kexue},
+  volume = {1},
+  pages = {168-79}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{House of Commons paper}
+
+\begin{bibexbox}{gb.hc2003/04-30}
+  Great Britain. Parliament. House of Commons, 2004. \emph{National Savings investment deposits:\@ account 2002--2003}. London:\@ National Audit Office (HC 200 3/04, 30).
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@techreport{gb.hc2003/04-30,
+  author = {{Great Britain. Parliament. House of Commons}},
+  year = {2004},
+  title = {National {Savings} Investment Deposits: account 2002--2003},
+  address = {London},
+  publisher = {National Audit Office},
+  type = {{HC}},
+  number = {2003/04, 30}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{House of Lords paper}
+
+\begin{bibexbox}{gb.hl1986/87-66}
+  Great Britain. Parliament. House of Lords. 1987. \emph{Social fund (Maternity and Funeral Expenses) Bill}. London:\@ HMSO (HL 1986/87, (66)).
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@techreport{gb.hl1986/87-66,
+  author = {{Great Britain. Parliament. House of Lords}},
+  year = {1987},
+  title = {Social Fund ({Maternity} and {Funeral} {Expenses}) Bill},
+  address = {London},
+  publisher = {HMSO},
+  type = {{HL}},
+  number = {1986/87, (66)}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{House of Commons/House of Lords bill}
+
+\begin{bibexbox}{gb.bill1987/88-66}
+  Great Britain. Parliament. House of Commons, 1988. \emph{Local government finance bill}. London:\@ HMSO (Bills | 1987/88, 66).
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@techreport{gb.bill1987/88-66,
+  author = {{Great Britain. Parliament. House of Commons}},
+  year = {1988},
+  title = {Local Government Finance Bill},
+  address = {London},
+  publisher = {HMSO},
+  type = {{Bills |}},
+  number = {1987/88, 66}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Act of Parliament (UK Statutes) before 1963}
+
+\begin{bibexbox}{gb.wa1735}
+  \emph{Witchcraft Act 1735} (9 Geo.2, c.5).
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{gb.wa1735,
+  key = {Witchcraft Act 1735},
+  title = {Witchcraft {Act} 1735},
+  titleaddon = {(9 Geo.2, c.5)}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Act of Parliament (UK Statues) 1963 onwards}
+
+\begin{bibexbox}{gb.pa2014}
+  \emph{Pensions Act 2014}, c.19. London:\@ TSO.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{gb.pa2014,
+  key = {Pensions Act 2014},
+  title = {Pensions {Act} 2014},
+  number = {c.19},
+  address = {London},
+  publisher = {TSO}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Command paper}
+
+\begin{bibexbox}{gb.cm6041}
+  Great Britain. Ministry of Defence, 2004. \emph{Delivering security in a changing world:\@ defence white paper}. London:\@ TSO (Cm. 6041).
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@techreport{gb.cm6041,
+  author = {{Great Britain. Ministry of Defence}},
+  year = {2004},
+  title = {Delivering Security in a Changing World: defence White Paper},
+  address = {London},
+  publisher = {TSO},
+  type = {{Cm.}},
+  number = {6041}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Statutory instrument}
+
+\begin{bibexbox}{gb.hmr2012}
+  \emph{The Human Medicines Regulations 2012} [Online], No.1916, United Kingdom:\@ HMSO. Available from:\@ \url{http://www.legislation.gov.uk/uksi/2012/1916/pdfs/uksi_20121916_en.pdf} [Accessed 17/04/2016]
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@book{gb.hmr2012,
+  title = {The {Human} {Medicines} {Regulations} 2012},
+  titleaddon = {[Online]},
+  number = {No.1916},
+  address = {United Kingdom},
+  publisher = {HMSO},
+  url = {http://www.legislation.gov.uk/uksi/2012/1916/pdfs/uksi_20121916_en.pdf},
+  urldate = {17/04/2016}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Legal case study}
+
+\begin{bibexbox}{seldon-v-c.w.j2012}
+  \emph{Seldon v Clarkson Wright \& Jakes}. [2012]. UKSC 16.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@unpublished{seldon-v-c.w.j2012,
+  title = {Seldon v {Clarkson} {Wright} \& {Jakes}},
+  note = {[2012]. UKSC 16}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{EU publication}
+
+\begin{bibexbox}{ec2015gra}
+  European Commission, 2015. \emph{General report on the activities of the European Union 2014}. Luxembourg:\@ Publications Office of the European Union.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@techreport{ec2015gra,
+  author = {{European Commission}},
+  year = {2015},
+  title = {General Report on the Activities of the {European} {Union} 2014},
+  address = {Luxembourg},
+  publisher = {Publications Office of the European Union}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+\subsection{EU regulation or directive, decision, recommendation or opinion}
+
+\begin{bibexbox}{eu.dir2015/413}
+  Directive (EU) 2015/413 of the European Parliament and of the Council of 11th March 2015 facilitating cross-border exchange of information on road-safety-related traffic offences [2015] \emph{OJ} L68/9.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@misc{eu.dir2015/413,
+  title = {Directive ({EU}) 2015/413 of the {European} {Parliament} and of the {Council} of
+    11th {March} 2015 Facilitating Cross-Border Exchange of Information on Road-Safety-Related
+    Traffic Offences},
+  titleaddon = {[2015] \emph{OJ} L68/9}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Judgment of the European Court of Justice}
+
+\begin{bibexbox}{srl.etal-v-comm2005}
+  \emph{Alessandrini Srl and others v.~Commission} (C-295/03 P) [2005] ECR I-5700.
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@unpublished{srl.etal-v-comm2005,
+  title = {Alessandrini {Srl} and others v.~{Commission}},
+  titleaddon = {(C-295/03 P) [2005] ECR I-5700}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Database}
+
+\begin{bibexbox}{bvd2008bt}
+  Bureau van Dijk, 2008. \emph{BT Group plc company report}. \emph{FAME} [Online]. London:\@ Bureau van Dijk. Available from:\@ \url{http://www.portal.euromonitor.com} [Accessed 6/11/2014].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@online{bvd2008bt,
+  author = {{Bureau van Dijk}},
+  year = {2008},
+  title = {{BT} {Group} PLC Company Report},
+  series = {\emph{FAME} [Online]},
+  address = {London},
+  organization = {Bureau van Dijk},
+  url = {http://www.portal.euromonitor.com},
+  urldate = {06/11/2014}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+
+\subsection{Dataset}
+
+\begin{bibexbox}{wilson2013rgc}
+  Wilson, D., 2013. \emph{Real geometry and connectedness via triangular description:\@ CAD example bank} [Online]. Bath:\@ University of Bath. Available from:\@ \url{http://doi.org/10.15125/BATH-00069} [Accessed 20/04/2016].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@online{wilson2013rgc,
+  author = {Wilson, D.},
+  year = {2013},
+  title = {Real Geometry and Connectedness via Triangular Description: {CAD} Example Bank},
+  titleaddon = {[Online]},
+  address = {Bath},
+  organization = {University of Bath},
+  doi = {10.15125/BATH-00069},
+  urldate = {20/04/2016}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+You can also use \texttt{dataset} as an alternative alias for \texttt{manual}.
+
+
+\subsection{Computer program}
+
+\begin{bibexbox}{screencasto}
+  @screencasto. \emph{Screencast-O-Matic} (v.2) [computer program]. \url{https://screencast-o-matic.com/} [Accessed 16/05/2016].
+  \tcblower
+\begin{Verbatim}[commentchar=\%]
+%</driver>
+%<*driver|bib>
+@online{screencasto,
+  author = {@screencasto},
+  title = {{Screencast-O-Matic}},
+  titleaddon = {(v.2) [computer program]},
+  url = {https://screencast-o-matic.com/},
+  urldate = {16/05/2016}}
+%</driver|bib>
+%<*driver>
+\end{Verbatim}
+\end{bibexbox}
+
+You can also use \texttt{software} as an alternative alias for \texttt{manual}.
+
+\bibliography{bath-bst}
+
+\section*{Licence}
+
+\begin{markdown*}{hybrid=true}
+%</driver>
+%<readme>
+%<readme>## Licence
+%<readme>
+%<*driver|readme>
+Copyright 2016 University of Bath.
+
+This work consists of the documented LaTeX file bath-bst.dtx and a Makefile.
+
+The text files contained in this work may be distributed and/or modified
+under the conditions of the [LaTeX Project Public License (LPPL)][lppl],
+either version 1.3c of this license or (at your option) any later
+version.
+
+This work is ‘maintained’ (as per LPPL maintenance status) by [Alex Ball][me].
+
+[lppl]: http://www.latex-project.org/lppl.txt "LaTeX Project Public License (LPPL)"
+[me]: https://github.bath.ac.uk/ab318/bathbib "Alex Ball"
+%</driver|readme>
+%<*driver>
+\end{markdown*}
+
+\newpage
+\lstset
+  { style=dtxbst
+  , aboveskip=0pt
+  , belowskip=0pt
+  , numbers=left
+  , numberstyle=\color{gray}\footnotesize\itshape
+  , firstnumber=last
+  , basicstyle=\ttfamily\footnotesize
+  , breaklines=true
+  }%
+\tcbset
+  { listing options =
+    { style = tcblatex
+    , style = dtxbst
+    , basicstyle=\ttfamily\footnotesize
+    }
+  }%
+\MakeShortVerb{\|}%
+\DocInput{\jobname.dtx}
+
+\end{document}
+%</driver>
+%<*bst>
+% \fi
+%
+% \section{Implementation}
+%
+% \setcounter{lstnumber}{16}
+%
+% \subsection{Preliminaries}
+%
+% We begin by listing the entry types that we will recognize.
+%
+%    \begin{macrocode}
+ENTRY
+  { address
+    archive
+    author
+    booktitle
+    chapter
+    doi
+    edition
+    editor
+    eid
+    eprint
+    howpublished
+    institution
+    journal
+    key
+    language
+    month
+    note
+    number
+    organization
+    pages
+    publisher
+    school
+    series
+    title
+    titleaddon
+    type
+    url
+    urldate
+    venue
+    volume
+    year
+  }
+  {}
+  { label extra.label sort.label short.list }
+%    \end{macrocode}
+%
+% Next, we define some standard integer variables, representing where we are in
+% a bibliography entry, and some utility string variables.
+%
+%    \begin{macrocode}
+INTEGERS { output.state before.all mid.sentence after.sentence after.block }
+FUNCTION {init.state.consts}
+{ #0 'before.all :=
+  #1 'mid.sentence :=
+  #2 'after.sentence :=
+  #3 'after.block :=
+}
+STRINGS { s t}
+%    \end{macrocode}
+%
+% \subsection{General formatting}
+%
+% The following functions provide the general mechanism for printing out the
+% formatted references.
+%
+%    \begin{macrocode}
+FUNCTION {output.nonnull}
+{ 's :=
+  output.state mid.sentence =
+    { ", " * write$ }
+    { output.state after.block =
+        { add.period$ write$
+          newline$
+          "\newblock " write$
+        }
+        { output.state before.all =
+            'write$
+            { add.period$ " " * write$ }
+          if$
+        }
+      if$
+      mid.sentence 'output.state :=
+    }
+  if$
+  s
+}
+FUNCTION {output}
+{ duplicate$ empty$
+    'pop$
+    'output.nonnull
+  if$
+}
+FUNCTION {output.check}
+{ 't :=
+  duplicate$ empty$
+    { pop$ "empty " t * " in " * cite$ * warning$ }
+    'output.nonnull
+  if$
+}
+FUNCTION {fin.entry}
+{ add.period$
+  write$
+  newline$
+}
+
+FUNCTION {new.block}
+{ output.state before.all =
+    'skip$
+    { after.block 'output.state := }
+  if$
+}
+FUNCTION {new.sentence}
+{ output.state after.block =
+    'skip$
+    { output.state before.all =
+        'skip$
+        { after.sentence 'output.state := }
+      if$
+    }
+  if$
+}
+FUNCTION {add.blank}
+{  " " * before.all 'output.state :=
+}
+
+FUNCTION {date.block}
+{
+  new.block
+}
+
+%    \end{macrocode}
+%
+% We define some useful logical operations.
+%
+%    \begin{macrocode}
+FUNCTION {not}
+{   { #0 }
+    { #1 }
+  if$
+}
+FUNCTION {and}
+{   'skip$
+    { pop$ #0 }
+  if$
+}
+FUNCTION {or}
+{   { pop$ #1 }
+    'skip$
+  if$
+}
+%    \end{macrocode}
+%
+% We define some useful tests.
+%
+%    \begin{macrocode}
+FUNCTION {new.block.checkb}
+{ empty$
+  swap$ empty$
+  and
+    'skip$
+    'new.block
+  if$
+}
+FUNCTION {field.or.null}
+{ duplicate$ empty$
+    { pop$ "" }
+    'skip$
+  if$
+}
+%    \end{macrocode}
+%
+% The \texttt{emphasize} function applies emphasis. The
+% \texttt{tie.or.space.prefix} function prefixes a string with a non-breaking
+% space if it is up to three characters long, or a normal space otherwise.
+% The \texttt{capitalize} function makes putting strings into sentence case a
+% little more robust. The \texttt{space.word} function puts space either side
+% of a word.
+%
+%    \begin{macrocode}
+FUNCTION {emphasize}
+{ duplicate$ empty$
+    { pop$ "" }
+    { "\emph{" swap$ * "}" * }
+  if$
+}
+FUNCTION {tie.or.space.prefix}
+{ duplicate$ text.length$ #3 <
+    { "~" }
+    { " " }
+  if$
+  swap$
+}
+
+FUNCTION {capitalize}
+{ "u" change.case$ "t" change.case$ }
+
+FUNCTION {space.word}
+{ " " swap$ * " " * }
+%    \end{macrocode}
+%
+% \subsection{Bibliography strings}
+%
+% Instead of dropping literal English words into the text of references, we
+% will use these functions instead. This makes it easier to translate the style
+% into other languages.
+%
+%    \begin{macrocode}
+FUNCTION {bbl.and}
+{ "and"}
+
+FUNCTION {bbl.etal}
+{ "et~al." }
+
+FUNCTION {bbl.editors}
+{ "eds." }
+
+FUNCTION {bbl.editor}
+{ "ed." }
+
+FUNCTION {bbl.edby}
+{ "edited by" }
+
+FUNCTION {bbl.edition}
+{ "ed." }
+
+FUNCTION {bbl.volume}
+{ "vol." }
+
+FUNCTION {bbl.of}
+{ "of" }
+
+FUNCTION {bbl.number}
+{ "no." }
+
+FUNCTION {bbl.nr}
+{ "no." }
+
+FUNCTION {bbl.in}
+{ "in" }
+
+FUNCTION {bbl.pages}
+{ "pp." }
+
+FUNCTION {bbl.page}
+{ "p." }
+
+FUNCTION {bbl.chapter}
+{ "chap." }
+
+FUNCTION {bbl.techrep}
+{ "Tech. Rep." }
+
+FUNCTION {bbl.mthesis}
+{ "Master's thesis" }
+
+FUNCTION {bbl.phdthesis}
+{ "Ph.D. thesis" }
+
+FUNCTION {bbl.first}
+{ "1st" }
+
+FUNCTION {bbl.second}
+{ "2nd" }
+
+FUNCTION {bbl.third}
+{ "3rd" }
+
+FUNCTION {bbl.fourth}
+{ "4th" }
+
+FUNCTION {bbl.fifth}
+{ "5th" }
+
+FUNCTION {bbl.st}
+{ "st" }
+
+FUNCTION {bbl.nd}
+{ "nd" }
+
+FUNCTION {bbl.rd}
+{ "rd" }
+
+FUNCTION {bbl.th}
+{ "th" }
+
+MACRO {jan} {"January"}
+
+MACRO {feb} {"February"}
+
+MACRO {mar} {"March"}
+
+MACRO {apr} {"April"}
+
+MACRO {may} {"May"}
+
+MACRO {jun} {"June"}
+
+MACRO {jul} {"July"}
+
+MACRO {aug} {"August"}
+
+MACRO {sep} {"September"}
+
+MACRO {oct} {"October"}
+
+MACRO {nov} {"November"}
+
+MACRO {dec} {"December"}
+
+%    \end{macrocode}
+%
+% This function allows us to convert cardinal numbers to English ordinals.
+%
+%    \begin{macrocode}
+FUNCTION {eng.ord}
+{ duplicate$ "1" swap$ *
+  #-2 #1 substring$ "1" =
+     { bbl.th * }
+     { duplicate$ #-1 #1 substring$
+       duplicate$ "1" =
+         { pop$ bbl.st * }
+         { duplicate$ "2" =
+             { pop$ bbl.nd * }
+             { "3" =
+                 { bbl.rd * }
+                 { bbl.th * }
+               if$
+             }
+           if$
+          }
+       if$
+     }
+   if$
+}
+
+%    \end{macrocode}
+%
+% \subsection{Field-specific formatting}
+%
+% These functions check if the .bib entry contains the information we expect.
+% The second one writes a warning to the log if not.
+%
+%    \begin{macrocode}
+FUNCTION {bibinfo.check}
+{ swap$
+  duplicate$ missing$
+    {
+      pop$ pop$
+      ""
+    }
+    { duplicate$ empty$
+        {
+          swap$ pop$
+        }
+        { swap$
+          "\bibinfo{" swap$ * "}{" * swap$ * "}" *
+        }
+      if$
+    }
+  if$
+}
+FUNCTION {bibinfo.warn}
+{ swap$
+  duplicate$ missing$
+    {
+      swap$ "missing " swap$ * " in " * cite$ * warning$ pop$
+      ""
+    }
+    { duplicate$ empty$
+        {
+          swap$ "empty " swap$ * " in " * cite$ * warning$
+        }
+        { swap$
+          "\bibinfo{" swap$ * "}{" * swap$ * "}" *
+        }
+      if$
+    }
+  if$
+}
+%    \end{macrocode}
+%
+% These functions provide the formatting instructions for different elements of
+% a reference entry, mostly corresponding to fields in .bib entries but with
+% some specialization.
+%
+%    \begin{macrocode}
+FUNCTION {format.eprint}
+{ eprint duplicate$ empty$
+    'skip$
+    { "\eprint"
+      archive empty$
+        'skip$
+        { "[" * archive * "]" * }
+      if$
+      "{" * swap$ * "}" *
+    }
+  if$
+}
+FUNCTION {format.url}
+{
+  doi empty$
+    { url }
+    { "http://doi.org/" doi * }
+  if$
+  duplicate$ empty$
+    { pop$ "" }
+    { "\urlprefix\url{" swap$ * "}" * }
+  if$
+  urldate empty$
+    'skip$
+    { " [\urldateprefix{}" * urldate * "]" * }
+  if$
+}
+
+INTEGERS { nameptr namesleft numnames }
+
+
+STRINGS  { bibinfo}
+
+FUNCTION {format.names}
+{ 'bibinfo :=
+  duplicate$ empty$ 'skip$ {
+  's :=
+  "" 't :=
+  #1 'nameptr :=
+  s num.names$ 'numnames :=
+  numnames 'namesleft :=
+    { namesleft #0 > }
+    { s nameptr
+      "{ll}{, jj}{, f{.}.}{~vv}"
+      format.name$
+      bibinfo bibinfo.check
+      't :=
+      nameptr #1 >
+        {
+          namesleft #1 >
+            { ", " * t * }
+            {
+              s nameptr "{ll}" format.name$ duplicate$ "others" =
+                { 't := }
+                { pop$ }
+              if$
+              t "others" =
+                {
+                  " " * bbl.etal *
+                }
+                {
+                  bbl.and
+                  space.word * t *
+                }
+              if$
+            }
+          if$
+        }
+        't
+      if$
+      nameptr #1 + 'nameptr :=
+      namesleft #1 - 'namesleft :=
+    }
+  while$
+  } if$
+}
+FUNCTION {format.names.ed}
+{
+  'bibinfo :=
+  duplicate$ empty$ 'skip$ {
+  's :=
+  "" 't :=
+  #1 'nameptr :=
+  s num.names$ 'numnames :=
+  numnames 'namesleft :=
+    { namesleft #0 > }
+    { s nameptr
+      "{f{.}.~}{vv~}{ll}{ jj}"
+      format.name$
+      bibinfo bibinfo.check
+      't :=
+      nameptr #1 >
+        {
+          namesleft #1 >
+            { ", " * t * }
+            {
+              s nameptr "{ll}" format.name$ duplicate$ "others" =
+                { 't := }
+                { pop$ }
+              if$
+              t "others" =
+                {
+
+                  " " * bbl.etal *
+                }
+                {
+                  bbl.and
+                  space.word * t *
+                }
+              if$
+            }
+          if$
+        }
+        't
+      if$
+      nameptr #1 + 'nameptr :=
+      namesleft #1 - 'namesleft :=
+    }
+  while$
+  } if$
+}
+FUNCTION {format.key}
+{ empty$
+    { key field.or.null }
+    { "" }
+  if$
+}
+
+FUNCTION {format.authors}
+{ author "author" format.names
+}
+FUNCTION {get.bbl.editor}
+{ editor num.names$ #1 > 'bbl.editors 'bbl.editor if$ }
+
+FUNCTION {format.editors}
+{ editor "editor" format.names duplicate$ empty$ 'skip$
+    {
+      "," *
+      " " *
+      get.bbl.editor
+      *
+    }
+  if$
+}
+FUNCTION {select.language}
+{ duplicate$ empty$
+    'pop$
+    { language empty$
+        'skip$
+        { "{\selectlanguage{" language * "}" * swap$ * "}" * }
+      if$
+    }
+    if$
+}
+
+FUNCTION {format.note}
+{
+ note empty$
+    { "" }
+    { note #1 #1 substring$
+      duplicate$ "{" =
+        'skip$
+        { output.state mid.sentence =
+          { "l" }
+          { "u" }
+        if$
+        change.case$
+        }
+      if$
+      note #2 global.max$ substring$ * "note" bibinfo.check
+    }
+  if$
+}
+
+FUNCTION {format.title}
+{ title
+  duplicate$ empty$ 'skip$
+    { "t" change.case$ }
+  if$
+  "title" bibinfo.check
+  duplicate$ empty$ 'skip$
+    {
+      select.language
+    }
+  if$
+  titleaddon
+  duplicate$ empty$ 'pop$
+    { tie.or.space.prefix
+      "titleaddon" bibinfo.check * *
+    }
+  if$
+}
+FUNCTION {format.full.names}
+{'s :=
+ "" 't :=
+  #1 'nameptr :=
+  s num.names$ 'numnames :=
+  numnames 'namesleft :=
+    { namesleft #0 > }
+    { s nameptr
+      "{vv~}{ll}" format.name$
+      't :=
+      nameptr #1 >
+        {
+          namesleft #1 >
+            { ", " * t * }
+            {
+              s nameptr "{ll}" format.name$ duplicate$ "others" =
+                { 't := }
+                { pop$ }
+              if$
+              t "others" =
+                {
+                  " " * bbl.etal *
+                }
+                {
+                  bbl.and
+                  space.word * t *
+                }
+              if$
+            }
+          if$
+        }
+        't
+      if$
+      nameptr #1 + 'nameptr :=
+      namesleft #1 - 'namesleft :=
+    }
+  while$
+}
+
+FUNCTION {author.editor.key.full}
+{ author empty$
+    { editor empty$
+        { key empty$
+            { cite$ #1 #3 substring$ }
+            'key
+          if$
+        }
+        { editor format.full.names }
+      if$
+    }
+    { author format.full.names }
+  if$
+}
+
+FUNCTION {author.key.full}
+{ author empty$
+    { key empty$
+         { cite$ #1 #3 substring$ }
+          'key
+      if$
+    }
+    { author format.full.names }
+  if$
+}
+
+FUNCTION {editor.key.full}
+{ editor empty$
+    { key empty$
+         { cite$ #1 #3 substring$ }
+          'key
+      if$
+    }
+    { editor format.full.names }
+  if$
+}
+
+FUNCTION {make.full.names}
+{ type$ "book" =
+  type$ "inbook" =
+  or
+    'author.editor.key.full
+    { type$ "proceedings" =
+        'editor.key.full
+        'author.key.full
+      if$
+    }
+  if$
+}
+
+FUNCTION {output.bibitem}
+{ newline$
+  "\bibitem[{" write$
+  label write$
+  ")" make.full.names duplicate$ short.list =
+     { pop$ }
+     { * }
+   if$
+  "}]{" * write$
+  cite$ write$
+  "}" write$
+  newline$
+  ""
+  before.all 'output.state :=
+}
+
+FUNCTION {n.dashify}
+{
+  't :=
+  ""
+    { t empty$ not }
+    { t #1 #1 substring$ "-" =
+        { t #1 #2 substring$ "--" = not
+            { "--" *
+              t #2 global.max$ substring$ 't :=
+            }
+            {   { t #1 #1 substring$ "-" = }
+                { "-" *
+                  t #2 global.max$ substring$ 't :=
+                }
+              while$
+            }
+          if$
+        }
+        { t #1 #1 substring$ *
+          t #2 global.max$ substring$ 't :=
+        }
+      if$
+    }
+  while$
+}
+
+FUNCTION {word.in}
+{ bbl.in capitalize
+  ":" *
+  " " * }
+
+FUNCTION {format.date}
+{ year "year" bibinfo.check duplicate$ empty$
+    {
+    }
+    'skip$
+  if$
+  extra.label *
+}
+FUNCTION {format.btitle}
+{ title
+  duplicate$ empty$ 'skip$
+    { "t" change.case$ }
+  if$
+  "title" bibinfo.check
+  duplicate$ empty$ 'skip$
+    {
+      emphasize
+      select.language
+    }
+  if$
+  titleaddon
+  duplicate$ empty$ 'pop$
+    { tie.or.space.prefix
+      "titleaddon" bibinfo.check * *
+    }
+  if$
+}
+FUNCTION {either.or.check}
+{ empty$
+    'pop$
+    { "can't use both " swap$ * " fields in " * cite$ * warning$ }
+  if$
+}
+FUNCTION {format.bvolume}
+{ volume empty$
+    { "" }
+    { bbl.volume volume tie.or.space.prefix
+      "volume" bibinfo.check * *
+      series "series" bibinfo.check
+      duplicate$ empty$ 'pop$
+        { emphasize ", " * swap$ * }
+      if$
+      "volume and number" number either.or.check
+    }
+  if$
+}
+FUNCTION {format.number.series}
+{ volume empty$
+    { number empty$
+        { series field.or.null }
+        { series empty$
+            { number "number" bibinfo.check }
+            { series "series" bibinfo.check
+              number tie.or.space.prefix "number" bibinfo.check * *
+            }
+          if$
+        }
+      if$
+    }
+    { "" }
+  if$
+}
+FUNCTION {is.num}
+{ chr.to.int$
+  duplicate$ "0" chr.to.int$ < not
+  swap$ "9" chr.to.int$ > not and
+}
+
+FUNCTION {extract.num}
+{ duplicate$ 't :=
+  "" 's :=
+  { t empty$ not }
+  { t #1 #1 substring$
+    t #2 global.max$ substring$ 't :=
+    duplicate$ is.num
+      { s swap$ * 's := }
+      { pop$ "" 't := }
+    if$
+  }
+  while$
+  s empty$
+    'skip$
+    { pop$ s }
+  if$
+}
+
+FUNCTION {convert.edition}
+{ extract.num "l" change.case$ 's :=
+  s "first" = s "1" = or
+    { bbl.first 't := }
+    { s "second" = s "2" = or
+        { bbl.second 't := }
+        { s "third" = s "3" = or
+            { bbl.third 't := }
+            { s "fourth" = s "4" = or
+                { bbl.fourth 't := }
+                { s "fifth" = s "5" = or
+                    { bbl.fifth 't := }
+                    { s #1 #1 substring$ is.num
+                        { s eng.ord 't := }
+                        { edition 't := }
+                      if$
+                    }
+                  if$
+                }
+              if$
+            }
+          if$
+        }
+      if$
+    }
+  if$
+  t
+}
+
+FUNCTION {format.edition}
+{ edition duplicate$ empty$ 'skip$
+    {
+      convert.edition
+      output.state mid.sentence =
+        { "l" }
+        { "t" }
+      if$ change.case$
+      "edition" bibinfo.check
+      " " * bbl.edition *
+    }
+  if$
+}
+INTEGERS { multiresult }
+FUNCTION {multi.page.check}
+{ 't :=
+  #0 'multiresult :=
+    { multiresult not
+      t empty$ not
+      and
+    }
+    { t #1 #1 substring$
+      duplicate$ "-" =
+      swap$ duplicate$ "," =
+      swap$ "+" =
+      or or
+        { #1 'multiresult := }
+        { t #2 global.max$ substring$ 't := }
+      if$
+    }
+  while$
+  multiresult
+}
+FUNCTION {format.pages}
+{ pages duplicate$ empty$ 'skip$
+    { duplicate$ multi.page.check
+        {
+          bbl.pages swap$
+          n.dashify
+        }
+        {
+          bbl.page swap$
+        }
+      if$
+      "pages" bibinfo.check
+      *
+    }
+  if$
+}
+FUNCTION {format.journal.pages}
+{ pages duplicate$ empty$ 'pop$
+    { swap$ duplicate$ empty$
+        { pop$ pop$ format.pages }
+        {
+          ", " *
+          swap$
+          n.dashify
+          pages multi.page.check
+            'bbl.pages
+            'bbl.page
+          if$
+          swap$
+          "pages" bibinfo.check
+          * *
+        }
+      if$
+    }
+  if$
+}
+FUNCTION {format.journal.eid}
+{ eid "eid" bibinfo.check
+  duplicate$ empty$ 'pop$
+    { swap$ duplicate$ empty$ 'skip$
+      {
+          ", " *
+      }
+      if$
+      swap$ *
+    }
+  if$
+}
+FUNCTION {format.vol.num.pages}
+{ volume field.or.null
+  duplicate$ empty$ 'skip$
+    {
+      "volume" bibinfo.check
+    }
+  if$
+  number "number" bibinfo.check duplicate$ empty$ 'skip$
+    {
+      swap$ duplicate$ empty$
+        { "there's a number but no volume in " cite$ * warning$ }
+        'skip$
+      if$
+      swap$
+      "(" swap$ * ")" *
+    }
+  if$ *
+  eid empty$
+    { format.journal.pages }
+    { format.journal.eid }
+  if$
+}
+
+FUNCTION {format.chapter.pages}
+{ chapter empty$
+    'format.pages
+    { type empty$
+        { bbl.chapter }
+        { type "l" change.case$
+          "type" bibinfo.check
+        }
+      if$
+      chapter tie.or.space.prefix
+      "chapter" bibinfo.check
+      * *
+      pages empty$
+        'skip$
+        { ", " * format.pages * }
+      if$
+    }
+  if$
+}
+
+FUNCTION {format.booktitle}
+{ booktitle
+  duplicate$ empty$ 'skip$
+    { "t" change.case$ }
+  if$
+  "booktitle" bibinfo.check
+  emphasize
+}
+FUNCTION {format.in.ed.booktitle}
+{ format.booktitle duplicate$ empty$ 'skip$
+    {
+      editor "editor" format.names.ed duplicate$ empty$ 'pop$
+        {
+          "," *
+          " " *
+          get.bbl.editor
+          " " *
+          * swap$
+          *
+          word.in swap$ *
+        }
+      if$
+    }
+  if$
+}
+FUNCTION {format.thesis.type}
+{ type duplicate$ empty$
+    'pop$
+    { swap$ pop$
+      "t" change.case$ "type" bibinfo.check
+    }
+  if$
+}
+FUNCTION {format.tr.number}
+{ type duplicate$ empty$
+    { pop$
+      number duplicate$ empty$
+        { pop$ ""
+        }
+        { "(" swap$
+          "number" bibinfo.check
+          * ")" *
+        }
+      if$
+    }
+    { "(" swap$
+      "t" change.case$ "type" bibinfo.check
+      *
+      number duplicate$ empty$
+        'pop$
+        { tie.or.space.prefix
+          "number" bibinfo.check
+          * *
+        }
+      if$
+      ")" *
+    }
+  if$
+}
+FUNCTION {format.article.crossref}
+{
+  word.in
+  " \cite{" * crossref * "}" *
+}
+FUNCTION {format.book.crossref}
+{ volume duplicate$ empty$
+    { "empty volume in " cite$ * "'s crossref of " * crossref * warning$
+      pop$ word.in
+    }
+    { bbl.volume
+      capitalize
+      swap$ tie.or.space.prefix "volume" bibinfo.check * * bbl.of space.word *
+    }
+  if$
+  " \cite{" * crossref * "}" *
+}
+FUNCTION {format.incoll.inproc.crossref}
+{
+  word.in
+  " \cite{" * crossref * "}" *
+}
+FUNCTION {format.org.or.pub}
+{ 't :=
+  ""
+  address empty$ t empty$ and
+    'skip$
+    {
+      address "address" bibinfo.check *
+      t empty$
+        'skip$
+        { address empty$
+            'skip$
+            { ": " * }
+          if$
+          t *
+        }
+      if$
+    }
+  if$
+}
+FUNCTION {format.publisher.address}
+{ publisher "publisher" bibinfo.warn format.org.or.pub
+}
+FUNCTION {format.organization.address}
+{ organization "organization" bibinfo.check format.org.or.pub
+}
+FUNCTION {format.institution.address}
+{ institution "institution" bibinfo.check format.org.or.pub
+}
+
+%    \end{macrocode}
+%
+% \subsection{Formatting drivers for specific entry types}
+%
+% These functions are called when an entry of the given type is being
+% formatted.
+%
+%    \begin{macrocode}
+FUNCTION {article}
+{ output.bibitem
+  format.authors "author" output.check
+  author format.key output
+  format.date "year" output.check
+  date.block
+  format.title "title" output.check
+  new.block
+  crossref missing$
+    {
+      journal
+      "journal" bibinfo.check
+      emphasize
+      "journal" output.check
+      format.vol.num.pages output
+    }
+    { format.article.crossref output.nonnull
+      format.pages output
+    }
+  if$
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+FUNCTION {book}
+{ output.bibitem
+  author empty$
+    { editor empty$
+      { format.btitle "title" output.check
+        format.date "year" output.check
+        year empty$ 'skip$ { date.block } if$
+      }
+      { format.editors "author and editor" output.check
+        editor format.key output
+        format.date "year" output.check
+        date.block
+        format.btitle "title" output.check
+      }
+      if$
+    }
+    { format.authors output.nonnull
+      crossref missing$
+        { "author and editor" editor either.or.check }
+        'skip$
+      if$
+      format.date "year" output.check
+      date.block
+      format.btitle "title" output.check
+    }
+  if$
+  format.bvolume output
+  format.number.series output
+  new.block
+  format.edition output
+  crossref missing$
+    { new.sentence
+      format.publisher.address output
+    }
+    {
+      new.block
+      format.book.crossref output.nonnull
+    }
+  if$
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+FUNCTION {booklet}
+{ output.bibitem
+  author empty$
+    { format.btitle "title" output.check
+      format.date "year" output.check
+      year empty$ 'skip$ { date.block } if$
+    }
+    { format.authors output
+      author format.key output
+      format.date "year" output.check
+      date.block
+      format.btitle "title" output.check
+    }
+  if$
+  new.block
+  howpublished "howpublished" bibinfo.check output
+  publisher empty$ 'skip$
+    { new.block}
+  if$
+  format.publisher.address output
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+
+FUNCTION {inbook}
+{ output.bibitem
+  author empty$
+    { format.editors "author and editor" output.check
+      editor format.key output
+    }
+    { format.authors output.nonnull
+      crossref missing$
+        { "author and editor" editor either.or.check }
+        'skip$
+      if$
+    }
+  if$
+  format.date "year" output.check
+  date.block
+  format.btitle "title" output.check
+  crossref missing$
+    {
+      format.publisher.address output
+      format.bvolume output
+      format.chapter.pages "chapter and pages" output.check
+      new.block
+      format.number.series output
+      new.sentence
+    }
+    {
+      format.chapter.pages "chapter and pages" output.check
+      new.block
+      format.book.crossref output.nonnull
+    }
+  if$
+  format.edition output
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+
+FUNCTION {incollection}
+{ output.bibitem
+  format.authors "author" output.check
+  author format.key output
+  format.date "year" output.check
+  date.block
+  format.title "title" output.check
+  new.block
+  crossref missing$
+    { format.in.ed.booktitle "booktitle" output.check
+      format.publisher.address output
+      format.bvolume output
+      format.number.series output
+      format.chapter.pages output
+      new.sentence
+      format.edition output
+    }
+    { format.incoll.inproc.crossref output.nonnull
+      format.chapter.pages output
+    }
+  if$
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+FUNCTION {inproceedings}
+{ output.bibitem
+  format.authors "author" output.check
+  author format.key output
+  format.date "year" output.check
+  date.block
+  format.title "title" output.check
+  new.block
+  crossref missing$
+    { format.in.ed.booktitle "booktitle" output.check
+      venue "venue" output.check
+      new.sentence
+      publisher empty$
+        { format.organization.address output }
+        { organization "organization" bibinfo.check output
+          format.publisher.address output
+        }
+      if$
+      format.bvolume output
+      format.number.series output
+      format.pages output
+    }
+    { format.incoll.inproc.crossref output.nonnull
+      format.pages output
+    }
+  if$
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+FUNCTION {conference} { inproceedings }
+FUNCTION {manual}
+{ output.bibitem
+  author empty$
+    { format.btitle "title" output.check
+      format.date "year" output.check
+      year empty$ 'skip$ { date.block } if$
+    }
+    { format.authors output
+      author format.key output
+      format.date "year" output.check
+      date.block
+      format.btitle "title" output.check
+    }
+  if$
+  new.block
+  format.number.series output
+  organization address new.block.checkb
+  format.organization.address output
+  format.edition output
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+
+FUNCTION {mastersthesis}
+{ output.bibitem
+  format.authors "author" output.check
+  author format.key output
+  format.date "year" output.check
+  date.block
+  format.btitle "title" output.check
+  new.block
+  bbl.mthesis format.thesis.type output.nonnull
+  new.block
+  school "school" bibinfo.warn output
+  address "address" bibinfo.check output
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+
+FUNCTION {misc}
+{ output.bibitem
+  author empty$
+    { format.title "title" output.check
+      format.date "year" output.check
+      year empty$ 'skip$ { date.block } if$
+    }
+    { format.authors output
+      author format.key output
+      format.date "year" output.check
+      date.block
+      format.title "title" output.check
+    }
+  if$
+  new.block
+  howpublished "howpublished" bibinfo.check output
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+FUNCTION {phdthesis}
+{ output.bibitem
+  format.authors "author" output.check
+  author format.key output
+  format.date "year" output.check
+  date.block
+  format.btitle "title" output.check
+  new.block
+  bbl.phdthesis format.thesis.type output.nonnull
+  new.block
+  school "school" bibinfo.warn output
+  address "address" bibinfo.check output
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+
+FUNCTION {proceedings}
+{ output.bibitem
+  editor empty$
+    { format.btitle "title" output.check
+      format.date "year" output.check
+      year empty$ 'skip$ { date.block } if$
+    }
+    { format.editors output
+      editor format.key output
+      format.date "year" output.check
+      date.block
+      format.btitle "title" output.check
+    }
+  if$
+  format.bvolume output
+  format.number.series output
+  new.sentence
+  publisher empty$
+    { format.organization.address output }
+    { organization "organization" bibinfo.check output
+      format.publisher.address output
+    }
+  if$
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+
+FUNCTION {techreport}
+{ output.bibitem
+  author empty$
+    { format.btitle "title" output.check
+      format.date "year" output.check
+      year empty$ 'skip$ { date.block } if$
+    }
+    { format.authors output
+      author format.key output
+      format.date "year" output.check
+      date.block
+      format.btitle "title" output.check
+    }
+  if$
+  new.block
+  publisher empty$
+    { format.institution.address output }
+    { institution "institution" bibinfo.check output
+      format.publisher.address output
+    }
+  if$
+  format.tr.number output
+  new.block
+  format.note output
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+
+FUNCTION {unpublished}
+{ output.bibitem
+  author empty$
+    { format.btitle "title" output.check
+      format.date "year" output.check
+      year empty$ 'skip$ { date.block } if$
+    }
+    { format.authors output
+      author format.key output
+      format.date "year" output.check
+      date.block
+      format.btitle "title" output.check
+    }
+  if$
+  new.block
+  format.note "note" output.check
+  new.block
+  format.eprint output
+  format.url output
+  fin.entry
+}
+
+%    \end{macrocode}
+%
+% Here are a list of aliases supported by this style.
+%
+%    \begin{macrocode}
+FUNCTION {audio} { booklet }
+FUNCTION {movie} { booklet }
+FUNCTION {music} { booklet }
+FUNCTION {video} { booklet }
+FUNCTION {dataset} { manual }
+FUNCTION {electronic} { manual }
+FUNCTION {online} { manual }
+FUNCTION {patent} { manual }
+FUNCTION {software} { manual }
+FUNCTION {standard} { manual }
+FUNCTION {www} { manual }
+%    \end{macrocode}
+%
+% The fallback driver is \texttt{misc}, as with most styles.
+%
+%    \begin{macrocode}
+FUNCTION {default.type} { misc }
+
+%    \end{macrocode}
+%
+% \subsection{Bibliography processing}
+%
+% We are now ready for Bib\TeX\ to read in the .bib file.
+%
+%    \begin{macrocode}
+READ
+%    \end{macrocode}
+%
+% These functions are used to generate a sort key for each entry in the .bib
+% file.
+%
+%    \begin{macrocode}
+FUNCTION {sortify}
+{ purify$
+  "l" change.case$
+}
+INTEGERS { len }
+FUNCTION {chop.word}
+{ 's :=
+  'len :=
+  s #1 len substring$ =
+    { s len #1 + global.max$ substring$ }
+    's
+  if$
+}
+FUNCTION {format.lab.names}
+{'s :=
+ "" 't :=
+  #1 'nameptr :=
+  s num.names$ 'numnames :=
+  numnames 'namesleft :=
+    { namesleft #0 > }
+    { s nameptr
+      "{vv~}{ll}" format.name$
+      't :=
+      nameptr #1 >
+        {
+          nameptr #2 =
+          numnames #3 > and
+            { "others" 't :=
+              #1 'namesleft := }
+            'skip$
+          if$
+          namesleft #1 >
+            { ", " * t * }
+            {
+              s nameptr "{ll}" format.name$ duplicate$ "others" =
+                { 't := }
+                { pop$ }
+              if$
+              t "others" =
+                {
+                  " " * bbl.etal *
+                }
+                {
+                  bbl.and
+                  space.word * t *
+                }
+              if$
+            }
+          if$
+        }
+        't
+      if$
+      nameptr #1 + 'nameptr :=
+      namesleft #1 - 'namesleft :=
+    }
+  while$
+}
+
+FUNCTION {author.key.label}
+{ author empty$
+    { key empty$
+        { cite$ #1 #3 substring$ }
+        'key
+      if$
+    }
+    { author format.lab.names }
+  if$
+}
+
+FUNCTION {author.editor.key.label}
+{ author empty$
+    { editor empty$
+        { key empty$
+            { cite$ #1 #3 substring$ }
+            'key
+          if$
+        }
+        { editor format.lab.names }
+      if$
+    }
+    { author format.lab.names }
+  if$
+}
+
+FUNCTION {editor.key.label}
+{ editor empty$
+    { key empty$
+        { cite$ #1 #3 substring$ }
+        'key
+      if$
+    }
+    { editor format.lab.names }
+  if$
+}
+
+FUNCTION {calc.short.authors}
+{ type$ "book" =
+  type$ "inbook" =
+  or
+    'author.editor.key.label
+    { type$ "proceedings" =
+        'editor.key.label
+        'author.key.label
+      if$
+    }
+  if$
+  'short.list :=
+}
+
+FUNCTION {calc.label}
+{ calc.short.authors
+  short.list
+  "("
+  *
+  year duplicate$ empty$
+     { pop$ "" }
+     'skip$
+  if$
+  *
+  'label :=
+}
+
+FUNCTION {sort.format.names}
+{ 's :=
+  #1 'nameptr :=
+  ""
+  s num.names$ 'numnames :=
+  numnames 'namesleft :=
+    { namesleft #0 > }
+    { s nameptr
+      "{ll{ }}{  f{ }}{  jj{ }}{ vv{}}"
+      format.name$ 't :=
+      nameptr #1 >
+        {
+          "   "  *
+          namesleft #1 = t "others" = and
+            { "zzzzz" 't := }
+            'skip$
+          if$
+          t sortify *
+        }
+        { t sortify * }
+      if$
+      nameptr #1 + 'nameptr :=
+      namesleft #1 - 'namesleft :=
+    }
+  while$
+}
+
+FUNCTION {sort.format.title}
+{ 't :=
+  "A " #2
+    "An " #3
+      "The " #4 t chop.word
+    chop.word
+  chop.word
+  sortify
+  #1 global.max$ substring$
+}
+FUNCTION {author.sort}
+{ author empty$
+    { title empty$
+        { key empty$
+            { "to sort, need author, title, or key in " cite$ * warning$
+              ""
+            }
+            { key sortify }
+          if$
+        }
+        { title sort.format.title }
+      if$
+    }
+    { author sort.format.names }
+  if$
+}
+FUNCTION {author.editor.sort}
+{ author empty$
+    { editor empty$
+        { title empty$
+            { key empty$
+                { "to sort, need author, editor, title, or key in " cite$ * warning$
+                  ""
+                }
+                { key sortify }
+              if$
+            }
+            { title sort.format.title }
+          if$
+        }
+        { editor sort.format.names }
+      if$
+    }
+    { author sort.format.names }
+  if$
+}
+FUNCTION {editor.sort}
+{ editor empty$
+    { title empty$
+        { key empty$
+            { "to sort, need editor, title, or key in " cite$ * warning$
+              ""
+            }
+            { key sortify }
+          if$
+        }
+        { title sort.format.title }
+      if$
+    }
+    { editor sort.format.names }
+  if$
+}
+
+%    \end{macrocode}
+%
+% The \texttt{presort} function applies the above functions to a given entry to
+% generate its sort key and save it to the \lstinline[style=dtxbst]!sort.key$!
+% variable.
+%
+%    \begin{macrocode}
+FUNCTION {presort}
+{ calc.label
+  label sortify
+  "    "
+  *
+  type$ "book" =
+  type$ "inbook" =
+  or
+    'author.editor.sort
+    { type$ "proceedings" =
+        'editor.sort
+        'author.sort
+      if$
+    }
+  if$
+  #1 entry.max$ substring$
+  'sort.label :=
+  sort.label
+  *
+  "    "
+  *
+  title field.or.null
+  sort.format.title
+  *
+  #1 entry.max$ substring$
+  'sort.key$ :=
+}
+
+%    \end{macrocode}
+%
+% We now tell Bib\TeX\ to go through each entry in turn and apply the
+% \texttt{presort} function, then use the resultant sort keys to put the entries
+% in order.
+%
+%    \begin{macrocode}
+ITERATE {presort}
+SORT
+%    \end{macrocode}
+%
+% If there are any duplicate author--year combinations, these functions detect
+% them and disambiguate them by adding a letter to the year.
+%
+%    \begin{macrocode}
+STRINGS { last.label next.extra }
+INTEGERS { last.extra.num last.extra.num.extended last.extra.num.blank number.label }
+FUNCTION {initialize.extra.label.stuff}
+{ #0 int.to.chr$ 'last.label :=
+  "" 'next.extra :=
+  #0 'last.extra.num :=
+  "a" chr.to.int$ #1 - 'last.extra.num.blank :=
+  last.extra.num.blank 'last.extra.num.extended :=
+  #0 'number.label :=
+}
+FUNCTION {forward.pass}
+{ last.label label =
+    { last.extra.num #1 + 'last.extra.num :=
+      last.extra.num "z" chr.to.int$ >
+       { "a" chr.to.int$ 'last.extra.num :=
+         last.extra.num.extended #1 + 'last.extra.num.extended :=
+       }
+       'skip$
+      if$
+      last.extra.num.extended last.extra.num.blank >
+        { last.extra.num.extended int.to.chr$
+          last.extra.num int.to.chr$
+          * 'extra.label := }
+        { last.extra.num int.to.chr$ 'extra.label := }
+      if$
+    }
+    { "a" chr.to.int$ 'last.extra.num :=
+      "" 'extra.label :=
+      label 'last.label :=
+    }
+  if$
+  number.label #1 + 'number.label :=
+}
+FUNCTION {reverse.pass}
+{ next.extra "b" =
+    { "a" 'extra.label := }
+    'skip$
+  if$
+  extra.label 'next.extra :=
+  extra.label
+  duplicate$ empty$
+    'skip$
+    { "{\natexlab{" swap$ * "}}" * }
+  if$
+  'extra.label :=
+  label extra.label * 'label :=
+}
+%    \end{macrocode}
+%
+% Applying these functions is a bit more tricky, but once we have done that,
+% we re-sort the entries to make absolutely sure they in the right order.
+%
+%    \begin{macrocode}
+EXECUTE {initialize.extra.label.stuff}
+ITERATE {forward.pass}
+REVERSE {reverse.pass}
+FUNCTION {bib.sort.order}
+{ sort.label
+  "    "
+  *
+  year field.or.null sortify
+  *
+  "    "
+  *
+  title field.or.null
+  sort.format.title
+  *
+  #1 entry.max$ substring$
+  'sort.key$ :=
+}
+ITERATE {bib.sort.order}
+SORT
+%    \end{macrocode}
+%
+% We now write out the beginning of the bibliography to a .bbl file. This
+% includes opening a \LaTeX\ environment, \texttt{thebibliography}, and some
+% user-redefinable strings.
+%
+%    \begin{macrocode}
+FUNCTION {begin.bib}
+{ preamble$ empty$
+    'skip$
+    { preamble$ write$ newline$ }
+  if$
+  "\begin{thebibliography}{" number.label int.to.str$ * "}" *
+  write$ newline$
+  "\providecommand{\natexlab}[1]{#1}"
+  write$ newline$
+  "\providecommand{\url}[1]{\texttt{#1}}"
+  write$ newline$
+  "\providecommand{\urlprefix}{Available from: }"
+  write$ newline$
+  "\providecommand{\urldateprefix}{Accessed }"
+  write$ newline$
+  "\providecommand{\selectlanguage}[1]{\relax}"
+  write$ newline$
+  "\providecommand{\bibinfo}[2]{#2}"
+  write$ newline$
+  "\providecommand{\eprint}[2][]{\url{#2}}"
+  write$ newline$
+}
+EXECUTE {begin.bib}
+EXECUTE {init.state.consts}
+%    \end{macrocode}
+%
+% We go through each entry in turn, in the right order, and write the
+% formatted text out to the file.
+%
+%    \begin{macrocode}
+ITERATE {call.type$}
+%    \end{macrocode}
+%
+% After the last entry, we close the \LaTeX\ environment and stop writing to the
+% .bbl file.
+%
+%    \begin{macrocode}
+FUNCTION {end.bib}
+{ newline$
+  "\end{thebibliography}" write$ newline$
+}
+EXECUTE {end.bib}
+%    \end{macrocode}
+% \iffalse
+%</bst>
+% \fi

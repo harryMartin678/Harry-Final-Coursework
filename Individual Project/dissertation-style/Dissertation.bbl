@@ -1,0 +1,11 @@
+\begin{thebibliography}{xx}
+
+\harvarditem{Lamport}{1986}{latex}
+Lamport, L.  \harvardyearleft 1986\harvardyearright , {\em {LaTeX \rm:} {A}
+  Document Preparation System}, Addison-Wesley.
+
+\harvarditem{Patashnik}{1988}{btxdoc}
+Patashnik, O.  \harvardyearleft 1988\harvardyearright , {{BibTeX ing}}.
+\newblock Documentation for general {BibTeX} users.
+
+\end{thebibliography}
