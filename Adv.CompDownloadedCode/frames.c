@@ -36,7 +36,7 @@ struct SymbolNode{
 
 void pushStack(){
 
-	printf("push stack: %d\n",currentFrame == NULL);
+	//printf("push stack: %d\n",currentFrame == NULL);
 
 	if(currentFrame == NULL){
 
@@ -71,7 +71,7 @@ void popStack(){
 
 void addSymbol(char* symbol,union Value value){
 
-	printf("ENTER addSymbol: %s %d %d \n",symbol,value.intValue,currentFrame->no);
+	//printf("ENTER addSymbol: %s %d %d \n",symbol,value.intValue,currentFrame->no);
 	if(currentFrame->listHead == NULL){
 
 		currentFrame->listHead = (struct SymbolNode*)malloc(sizeof(struct SymbolNode));
@@ -119,11 +119,11 @@ void printCurrentFrame(){
 
 
 
-union Value getValue0(char* symbol,int backTrack){
+union Value getValue0(char* symbol,int backTrack,int comparePointer){
 
-	printf("get value: %s %d\n",symbol,backTrack);
+	//printf("get value: %s %d\n",symbol,backTrack);
 	struct Frame* frame = currentFrame;
-	struct SymbolNode* finalResult;
+	struct SymbolNode* finalResult = NULL;
 
 	while(backTrack-- > 0){
 
@@ -139,7 +139,8 @@ union Value getValue0(char* symbol,int backTrack){
 			tranverse = tranverse->next;
 		}
 
-		if(tranverse->symbol == symbol){
+		if((comparePointer && tranverse->symbol == symbol)
+				|| (!comparePointer && strcmp(tranverse->symbol,symbol) == 0)){
 
 			finalResult = tranverse;
 			break;
@@ -151,15 +152,34 @@ union Value getValue0(char* symbol,int backTrack){
 
 	}
 
+	//printf("End get value %d \n",finalResult->symbol == NULL);
 	return finalResult->value;
+}
+
+void changeAllInFrame(int amount){
+
+	struct SymbolNode* node = currentFrame->listHead;
+
+	while(node != NULL){
+
+		//printf("NEXT CHANGE FRAME BEFORE %d\n",node->value.intValue);
+		node->value.intValue += amount;
+		//printf("NEXT CHANGE FRAME AFTER %d\n",node->value.intValue);
+		node = node->next;
+	}
+}
+
+union Value getValueByEquality(char* symbol){
+
+	return getValue0(symbol,0,0);
 }
 
 union Value getValue(char* symbol){
 
-	return getValue0(symbol,0);
+	return getValue0(symbol,0,1);
 }
 
 union Value backTrackValue(char* symbol){
 
-	return getValue0(symbol,1);
+	return getValue0(symbol,1,1);
 }

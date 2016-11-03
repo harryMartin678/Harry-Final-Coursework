@@ -1,0 +1,69 @@
+\begin{thebibliography}{10}
+
+\bibitem{Blender}
+{ Blender Foundation}.
+\newblock {Blender}.
+
+\bibitem{Spore}
+{ EA, Maxis}.
+\newblock {Spore}.
+
+\bibitem{pokemon_go}
+{ Niantic, Inc}.
+\newblock {Pokemon GO}.
+
+\bibitem{SpecTrek}
+{ SpecTrek}.
+\newblock {SpecTrekking}.
+
+\bibitem{ZombiesRun}
+{ Zombies, Run!}
+\newblock {Zombies, Run!}
+
+\bibitem{TreeUnity}
+UnKnown Author.
+\newblock Fallen tree barrier - free, 2012.
+
+\bibitem{GMUnity}
+UnKnown Author.
+\newblock Google maps for unity, 2012.
+
+\bibitem{ARToolKit}
+UnKnown Author.
+\newblock Artoolkit for unity, 2016.
+
+\bibitem{HTTPServer}
+UnKnown Author.
+\newblock Class httpserver, 2016.
+
+\bibitem{GPSACCURACY}
+UnKnown Author.
+\newblock Gps accuracy, 2016.
+
+\bibitem{GOOGLEMAPSPOPDEN}
+UnKnown Author.
+\newblock Population density, 2016.
+
+\bibitem{WWW}
+UnKnown Author.
+\newblock Www, 2016.
+
+\bibitem{Dirichlet2010}
+Gupta~M Frigyik~B, Kapila~A.
+\newblock Introduction to the dirichlet distribution and related processes,
+  2010.
+
+\bibitem{Willmott:2007}
+Andrew Willmott.
+\newblock Fast object distribution.
+\newblock In {\em ACM SIGGRAPH 2007 Sketches}, SIGGRAPH '07, New York, NY, USA,
+  2007. ACM.
+
+\bibitem{Multiple-Knapsacks}
+Hai-Tao Yu and Fuji Ren.
+\newblock Search result diversification via filling up multiple knapsacks.
+\newblock In {\em Proceedings of the 23rd ACM International Conference on
+  Conference on Information and Knowledge Management}, CIKM '14, pages
+  609--618, New York, NY, USA, 2014. ACM.
+
+\end{thebibliography}

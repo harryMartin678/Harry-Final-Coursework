@@ -10,7 +10,7 @@
 #ifndef INTERPRET_H_
 #define INTERPRET_H_
 
-struct TacLine{
+/*struct TacLine{
 
 	int variable;
 	int operand1;
@@ -18,13 +18,14 @@ struct TacLine{
 	int operand2;
 	int isVar2;
 	char operator;
-};
+};*/
 
 int interpret(NODE* tree,int level);
 
 
-struct TacLine* compile(NODE* tree);
+void compile(NODE* tree);
 void compileToAssembly(NODE* tree);
 void testfunc();
+void test_func();
 
 #endif /* INTERPRET_H_ */

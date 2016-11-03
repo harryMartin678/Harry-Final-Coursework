@@ -10,13 +10,20 @@
 
 struct TacLine{
 
-	int variable;
+	char* variable;
+	int paramType;
+	int isVar1Temp;
+	char* variable2;
+	int isVar2Temp;
 	int operand1;
 	int isVar1;
 	int operand2;
 	int isVar2;
 	char operator;
 	int isSimple;
+	int isStatement;
+	int isVariableEq;
+	int isNext;
 	struct TacLine* next;
 };
 

@@ -116,22 +116,12 @@ int main(int argc, char** argv)
     printf("--C COMPILER\n");
     yyparse();
     tree = ans;
-    //printf("parse finished with %p\n", tree);
-    //print_tree(tree);
+   // print_tree(tree);
    // printf("Answer: %d\n",interpret(tree,0));
     //testFunc();
-    //print_tac(compile(tree));
-    //compile(tree);
-   // struct TacLine tacLine;
-   // tacLine.variable = 1;
-   // tacLine.operand1 = 2;
-   // tacLine.isVar1 = 1;
-    //tacLine.operand2 = 3;
-    //tacLine.isVar2 = 0;
-    //tacLine.operator = '*';
 
-    //convertToAssembly(tacLine);
     compileToAssembly(tree);
+    //compile(tree);
     //test_func();
     return 0;
 }
