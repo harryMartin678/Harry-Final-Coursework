@@ -5,6 +5,9 @@
  *      Author: harry
  */
 
+#include "nodes.h"
+#include "C.tab.h"
+
 union Value{
 
 	int intValue;
@@ -17,3 +20,4 @@ union Value getValue(char* symbol);
 union Value backTrackValue(char* symbol);
 void changeAllInFrame(int amount);
 union Value getValueByEquality(char* symbol);
+union Value getLastValue();

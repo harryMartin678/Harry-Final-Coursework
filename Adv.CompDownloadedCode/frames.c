@@ -121,7 +121,6 @@ void printCurrentFrame(){
 
 union Value getValue0(char* symbol,int backTrack,int comparePointer){
 
-	//printf("get value: %s %d\n",symbol,backTrack);
 	struct Frame* frame = currentFrame;
 	struct SymbolNode* finalResult = NULL;
 
@@ -152,8 +151,26 @@ union Value getValue0(char* symbol,int backTrack,int comparePointer){
 
 	}
 
-	//printf("End get value %d \n",finalResult->symbol == NULL);
 	return finalResult->value;
+}
+
+union Value getLastValue(){
+
+	struct SymbolNode* node = currentFrame->listHead;
+
+	if(node == NULL){
+
+		union Value value;
+		value.intValue = 0;
+		return value;
+	}
+
+	while(node->next != NULL){
+
+		node = node->next;
+	}
+
+	return node->value;
 }
 
 void changeAllInFrame(int amount){

@@ -1,0 +1,16 @@
+<graph version="v4.05" name="" author="" interval="1" timeMode="asynchronous" distributionMode="fixed speed" speed="100" actions="1" dice="D6" skill="" strategy="" multiplayer="" width="600" height="560" numberOfRuns="100" visibleRuns="25" colorCoding="1">
+  <connection type="Resource Connection" start="8" end="10" label="" position="0.5" color="Blue" thickness="2"/>
+  <connection type="Resource Connection" start="9" end="10" label="" position="0.5" color="Brown" thickness="2"/>
+  <connection type="Resource Connection" start="7" end="10" label="" position="0.5" color="Red" thickness="2"/>
+  <connection type="Resource Connection" start="10" end="13" label="" position="0.5" color="Red" thickness="2"/>
+  <connection type="Resource Connection" start="10" end="11" label="" position="0.5" color="Brown" thickness="2"/>
+  <connection type="Resource Connection" start="10" end="12" label="" position="0.5" color="Red" thickness="2"/>
+  <connection type="Resource Connection" start="10" end="13" label="" position="0.5" color="Blue" thickness="2"/>
+  <node symbol="Pool" x="189" y="134" color="Red" caption="Iron" thickness="2" captionPos="0.25" activationMode="passive" pullMode="push any" actions="1" resourceColor="Red" startingResources="10" capacity="12"/>
+  <node symbol="Pool" x="184" y="215" color="Blue" caption="Stone" thickness="2" captionPos="0.25" activationMode="passive" pullMode="push any" actions="1" resourceColor="Blue" startingResources="10" capacity="10"/>
+  <node symbol="Pool" x="186" y="304" color="Brown" caption="Wood" thickness="2" captionPos="0.25" activationMode="passive" pullMode="push any" actions="1" resourceColor="Brown" startingResources="10" capacity="12"/>
+  <node symbol="Pool" x="312" y="208" color="Black" caption="Player" thickness="2" captionPos="0.25" activationMode="automatic" pullMode="pull all" actions="1" resourceColor="Black" startingResources="0" capacity="20"/>
+  <node symbol="Pool" x="432" y="214" color="Black" caption="Poll" thickness="2" captionPos="0.25" activationMode="automatic" pullMode="pull all" actions="1" resourceColor="Black" startingResources="0" capacity="-1"/>
+  <node symbol="Pool" x="399" y="130" color="Black" caption="Handle" thickness="2" captionPos="0.25" activationMode="automatic" pullMode="pull all" actions="1" resourceColor="Black" startingResources="0" capacity="-1"/>
+  <node symbol="Pool" x="427" y="289" color="Black" caption="Weapon End" thickness="2" captionPos="0.25" activationMode="automatic" pullMode="pull all" actions="1" resourceColor="Black" startingResources="0" capacity="-1"/>
+</graph>

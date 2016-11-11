@@ -8,11 +8,10 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "nodes.h"
-#include "C.tab.h"
+//#include "nodes.h"
+//#include "C.tab.h"
 #include "TacLineQueue.h"
-#include "frames.h"
-
+#include "MIPSMemoryInfo.h"
 
 //TacLine{
 
@@ -28,7 +27,7 @@ typedef struct TacLine TacLine;
 
 int temp_count = 0;
 
-char* MAINSTRING = "main:";
+char* MAINSTRING = "main";
 char* IFSTRING = "IF";
 
 /*void test_func(){
@@ -156,6 +155,24 @@ void createParam(struct TypeValue value){
 
 		tacline->variable = value.lexeme;
 	}
+
+	addToQueue(tacline);
+}
+
+void printPopArg(struct TypeValue value){
+
+	printf("PopArg %s;\n",value.lexeme);
+
+}
+
+void createPopArg(struct TypeValue value){
+
+	struct TacLine* line = (struct TacLine*)malloc(sizeof(struct TacLine));
+	line->operator = 'A';
+	line->variable = value.lexeme;
+	line->paramType = value.type;
+
+	addToQueue(line);
 }
 
 struct TypeValue placeInterInTemp(struct TypeValue value){
@@ -184,6 +201,10 @@ void createFunctionCall(char* function){
 	struct TacLine* line = (struct TacLine*)malloc(sizeof(struct TacLine));
 	line->variable = function;
 	line->operator = 'F';
+	line->isStatement = 0;
+	line->isNext = 0;
+	line->isSimple = 0;
+	line->next = NULL;
 
 	addToQueue(line);
 }
@@ -191,7 +212,6 @@ void createFunctionCall(char* function){
 
 struct TypeValue compile0(NODE* tree,int tabs){
 
-	//printf("%s %d\n",named(tree->type),tabs);
 	//TacLine* tacLine = (TacLine*)malloc(sizeof(TacLine));
 
 	//printf("Type: %s \n",named(tree->type));
@@ -206,27 +226,44 @@ struct TypeValue compile0(NODE* tree,int tabs){
 		TOKEN* name = (TOKEN*)tree->left->right->left->left;
 		printf("%s: \n",name->lexeme);
 		createStatement(name->lexeme);
+		compile0(tree->left,tabs);
 		compile0(tree->right,tabs+1);
+
 		break;
 
 
 	case ',':
 
 		;
-		struct TypeValue valueL = compile0(tree->left,tabs);
+		if(tree->left->type != '~'){
+			struct TypeValue valueL = compile0(tree->left,tabs);
 
-		valueL = placeInterInTemp(valueL);
-		printParam(valueL);
-		createParam(valueL);
+			valueL = placeInterInTemp(valueL);
+			printParam(valueL);
+			createParam(valueL);
 
-		struct TypeValue valueR = compile0(tree->right,tabs);
+		}else{
 
-		valueR = placeInterInTemp(valueR);
-		printParam(valueR);
-		createParam(valueR);
+			struct TypeValue valueL = compile0(tree->left->right,tabs);
+			printPopArg(valueL);
+			createPopArg(valueL);
+		}
 
+		if(tree->right->type != '~'){
+			struct TypeValue valueR = compile0(tree->right,tabs);
 
+			valueR = placeInterInTemp(valueR);
+			printParam(valueR);
+			createParam(valueR);
+
+		}else{
+
+			struct TypeValue valueR = compile0(tree->right->right,tabs);
+			printPopArg(valueR);
+			createPopArg(valueR);
+		}
 		break;
+
 	case APPLY:
 
 		genTemp();
@@ -367,18 +404,21 @@ struct TypeValue compile0(NODE* tree,int tabs){
 			v.type = 0;
 			return v;
 
-		}else{
+		}else if(tree->left->type == IDENTIFIER){
 
 			struct TypeValue a;
 			a.lexeme = ((TOKEN*)tree->left)->lexeme;
 			a.type = 3;
 			return a;
-		}
 
+		}
+		break;
 	default:
 
 		compile0(tree->left,tabs);
-		compile0(tree->right,tabs);
+		if(tree->right != NULL){
+			compile0(tree->right,tabs);
+		}
 	}
 
 	//if(isLeft){
@@ -392,6 +432,8 @@ struct TypeValue compile0(NODE* tree,int tabs){
 	return n;
 }
 
+
+
 void createStatement(char* statement){
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
@@ -399,6 +441,7 @@ void createStatement(char* statement){
 	line->isStatement = 1;
 	line->isVariableEq = 0;
 	line->isNext = 0;
+	line->operator = 'D';
 	line->next = NULL;
 
 	addToQueue(line);
@@ -549,7 +592,7 @@ int numDigits(int number)
 
 
 
-int convertToAssembly(TacLine* line,int* fpStart){
+void convertToAssembly(TacLine* line){
 
 	char* instruct;
 	switch(line->operator){
@@ -587,7 +630,7 @@ int convertToAssembly(TacLine* line,int* fpStart){
 
 		}else{
 
-			if(line->isVar1 == 1 && line->isVar2){
+			if(line->isVar1 && line->isVar2){
 
 				instruct = "move";
 
@@ -618,7 +661,7 @@ int convertToAssembly(TacLine* line,int* fpStart){
 
 	case 'F':
 
-		printFunctionCall(line->variable,fpStart);
+		printFunctionCall(line->variable);
 
 		break;
 	}
@@ -626,17 +669,15 @@ int convertToAssembly(TacLine* line,int* fpStart){
 	printAssemInstruct(instruct,line->variable,line->operand1,line->isVar1,line->operand2,line->isVar2,
 			line->isSimple,line->isStatement,line->isVariableEq,line->variable2);
 
-	return fpStart;
 }
 
-void printFunctionCall(char* function,int* fpStart){
+void printFunctionCall(char* function){
 
-	printf("move $fp, $sp %d\n",fpStart);
 	printf("jal %s\n",function);
-	*fpStart = 0;
+	pushStack();
 }
 
-void printParamInstruct(void* param,int type,int* fpStart){
+void printParamInstruct(void* param,int type){
 
 	if(type == 1){
 
@@ -651,48 +692,56 @@ void printParamInstruct(void* param,int type,int* fpStart){
 
 	}
 
-	*fpStart += 4;
 
 }
 
 void printAssemInstruct(char* instruct,char* variable, int operand1, int isVar1, int operand2, int isVar2,
 		int isSimple,int isStatement,int isVariableEq,char* variable2){
 
-	//printf("ENTER PRINT ASSEM %s \n",instruct);
+	printf("Assem Instruct: %s \n",instruct);
 	if(isStatement){
 
-		if(variable == MAINSTRING){
+		//variable
+		if(strcmp(variable,MAINSTRING) == 0){
 
 			printf(".text\n.globl\tmain\n");
 			pushStack();
 		}
 
-		printf("%s:",variable);
+		printf("%s:\n",variable);
 
-		if(variable == MAINSTRING){
+		int bytesToAll = getBytesToAllocation(variable);
 
-			printf("\nmove $fp $sp");
+		printf("li $v0, 9\n");
+		printf("li $a0,%d\n",bytesToAll);
+		printf("syscall\n");
+		printf("sw $ra, ($v0)\n");
+		printf("sw $fp, 4($v0)\n");
+		if(strcmp(variable,MAINSTRING) != 0){
+			printf("lw $t0, 4($fp)\n");
+			printf("sw $t0, 4($v0)\n");
+			setMemoryOffset(8);
+		}else{
+			setMemoryOffset(4);
 		}
+		printf("move $fp, $v0");
+
 
 	}else if(isVariableEq){
+
 
 		char* stackPos;
 		if(strcmp(instruct,"sw") == 0){
 
-			printf("subu $sp $sp 4\n");
-			changeAllInFrame(4);
-			stackPos = "($sp)";
-			union Value value;
-			value.intValue = 0;
-			addSymbol(variable,value);
-			printf("%s %s %s",instruct,variable2,stackPos);
+			int value = addNextMemLoc(variable).intValue;
+			printf("%s %s %d($fp)",instruct,variable2,value);
 
 		}else if(strcmp(instruct,"lw") == 0){
 
 			int offset = getValueByEquality(variable2).intValue;
-			intToString("",offset,"($sp)",&stackPos);
+			intToString("",offset,"($fp)",&stackPos);
 			printf("%s %s %s",instruct,variable,stackPos);
-			//stackPos = "c";
+			free(stackPos);
 		}
 
 
@@ -735,18 +784,34 @@ void compile(NODE* tree){
 	compile0(tree,0);
 }
 
+void createParamData(int numOfParams){
+
+	if(numOfParams > 0){
+		printf(".data\nparams:	.word ");
+		int i;
+		for(i = 0; i < numOfParams-1; i++)printf("0, ");
+		printf("0\n");
+	}
+
+}
+
+
 void compileToAssembly(NODE* tree){
 
 	compile0(tree,0);
 
 	printf("\n");
 
+	calculateFunctionInfo(getElement(0));
+
+	createParamData(getMaxParams());
+
+	//printFunctionInfo();
+
 	int i;
-	int* fpStart = (int*)malloc(sizeof(int));
-	*fpStart = 0;
 	for(i = 0; i < getSize(); i++){
 
-		convertToAssembly(getElement(i),fpStart);
+		convertToAssembly(getElement(i));
 	}
 
 	printf("li $v0,10\n");
