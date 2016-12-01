@@ -1,10 +1,14 @@
-int f(int a, int b){
-
-	return a * b;
-}
-
-
 int main(){
 
-	return f(4,3);
+	int n = 5;
+	int a = 2;
+	int answer = 1;
+
+	while(n >= 1){
+
+		answer = answer * a;
+		n = n - 1;
+	}
+
+	return answer;
 }

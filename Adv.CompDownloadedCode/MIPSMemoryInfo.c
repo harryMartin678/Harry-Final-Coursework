@@ -1,6 +1,7 @@
 #include "frames.h"
 #include "TacLineQueue.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 
 struct Param{
@@ -70,6 +71,7 @@ void calculateFunctionInfo(struct TacLine* lines){
 	struct TacLine* next = lines;
 	FunctionInfo* current;
 	maxParams = 0;
+	int currentFuncParams = 0;
 
 	while(next != NULL){
 
@@ -80,17 +82,23 @@ void calculateFunctionInfo(struct TacLine* lines){
 		}else if(next->operator == 'A'){
 
 			current->Size += 4;
-			maxParams ++;
+			currentFuncParams ++;
 
 		}else if(next->operator == 'D'){
 
 			current = newFunctionInfo();
 			current->name = next->variable;
-			current->Size = 8;
+			current->Size = 12;
+			if(currentFuncParams > maxParams){
+
+				maxParams = currentFuncParams;
+			}
+			currentFuncParams = 0;
 		}
 
 		next = next->next;
 	}
+	printFunctionInfo();
 
 }
 
@@ -105,8 +113,6 @@ void printFunctionInfo(){
 
 	while(next != NULL){
 
-		printf("%s %d \n",next->name,next->Size);
-
 		if(next->endOfList){
 
 			break;
@@ -118,7 +124,8 @@ void printFunctionInfo(){
 
 FunctionInfo* newFunctionInfo(){
 
-	FunctionInfo* new = (FunctionInfo*)malloc(sizeof(FunctionInfo*));
+	FunctionInfo* new = (FunctionInfo*)malloc(sizeof(FunctionInfo));
+	new->nextFunction = NULL;
 	new->endOfList = 1;
 
 	if(funcHead == NULL){
@@ -133,8 +140,8 @@ FunctionInfo* newFunctionInfo(){
 			append = append->nextFunction;
 		}
 
-		append->nextFunction = new;
 		append->endOfList = 0;
+		append->nextFunction = new;
 	}
 
 	return new;
@@ -152,7 +159,7 @@ int getBytesToAllocation(char* symbol){
 			return next->Size;
 		}
 
-		if(next->endOfList){
+		if(next->nextFunction == NULL){
 
 			break;
 		}
@@ -170,7 +177,6 @@ void setMemoryOffset(int offset){
 
 	currentOffset = offset;
 }
-
 
 union Value addNextMemLoc(char* symbol){
 

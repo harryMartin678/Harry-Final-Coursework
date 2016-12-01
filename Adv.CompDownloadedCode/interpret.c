@@ -7,121 +7,138 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "nodes.h"
+//#include "nodes.h"
 #include "C.tab.h"
 #include <string.h>
 #include "frames.h"
+#include <stdlib.h>
 
-
-
-void testFunc(){
-
-	pushStack();
-    union Value value1;
-    value1.intValue = 2;
-	addSymbol("x",value1);
-	union Value value2;
-	value2.intValue = 5;
-	addSymbol("y",value2);
-	pushStack();
-	union Value value3;
-	value3.intValue = 1;
-	addSymbol("x",value3);
-
-	union Value ret = getValue("x");
-	printf("%d\n",ret.intValue);
-}
+void parseParameters(NODE* parameter,NODE* argument,int backTrack);
+int interpret(NODE* tree);
+Value interpret0(NODE* tree,int* answerBranch);
+Value evalFunction(NODE* tree,int backTrack);
+Value evalExp0(NODE* tree,int backTrack);
+Value evalExp(NODE* tree);
+Value backTrackEvalExp(NODE* tree,int backTrack);
+int evalCondition(NODE* tree);
 
 int interpret(NODE* tree){
 
-	int* answerBranch = (int)malloc(sizeof(int));
+	printf("\n\n");
+	int* answerBranch = (int*)malloc(sizeof(int));
 
-	pushStack();
-	int value = interpret0(tree,answerBranch);
+	pushStack(NULL,"main");
+	Value value = interpret0(tree,answerBranch);
 	free(answerBranch);
 	popStack();
 
-	return value;
+	return value.valueType.intValue;
 }
 
-int interpret0(NODE* tree,int* answerBranch){
+Value interpret0(NODE* tree,int* answerBranch){
 
-	//printf("type: %s\n",named(tree->type));
-	int found = 0;
+	//printf("type: %s \n",named(tree->type));
+	Value found;
 
-	if(strcmp(named(tree->type),"D") == 0){
+	if(tree->type == 'D' ){
 
 		TOKEN* function = ((TOKEN*)tree->left->right->left->left);
 
 		if(strcmp(function->lexeme,"main") != 0){
 
-			//printf("Created Function: %s \n",function->lexeme);
-			function-> next = (TOKEN*)tree;
+			Value functionVal;
+			Closure* closure = (struct Closure*)malloc(sizeof(struct Closure));
+			closure->env = getEnvironment();
+			closure->functionBody = tree;
+			functionVal.valueType.closure = closure;
+			functionVal.isFunction = 1;
+			//value.functionBody = (TOKEN*)tree;
+			addSymbol(function->lexeme,functionVal);
 			*answerBranch = 0;
-			return 0;
-			//TOKEN* functionCpy = lookup_token(function->lexeme);
-			//printf("EQUAL: %d %d\n",functionCpy->next == NULL,function-> next == NULL);
+			Value ret;
+			ret.isFunction = 0;
+			ret.valueType.intValue = 0;
+			return ret;
 		}
-
 
 	}
 
 	if(tree->type == RETURN){
 
 		*answerBranch = 1;
-
-		int value = evalExp(tree);
+		Value value = evalExp(tree);
 		return value;
 
 
 	}else if(tree->type == '='){
 
+		Value evalValue = evalExp(tree->right);
 
-		int evalValue = evalExp(tree->right);
-
-		//dTOKEN* variable = lookup_token(((TOKEN*)tree->left->left)->lexeme);
-		//((TOKEN*)tree->left->left)->value = evalValue;
-		union Value value;
-		value.intValue = evalValue;
-		addSymbol(((TOKEN*)tree->left->left)->lexeme,value);
+		addSymbol(((TOKEN*)tree->left->left)->lexeme,evalValue);
 
 		return evalValue;
 
 	}else if(tree->type == IF){
 
-		if(evalCondition(tree->left,answerBranch)){
+		if(evalCondition(tree->left)){
 
-			return interpret0(tree->right->left,answerBranch);
+			return interpret0(tree->right,answerBranch);
 
 		}else if(tree->right->type == ELSE){
 
 			return interpret0(tree->right->right,answerBranch);
+
+		}else{
+
+			*answerBranch = 0;
+			Value value;
+			value.isFunction = 0;
+			value.valueType.intValue = 0;
+			return value;
 		}
 
-	}else if(tree->type != LEAF){
+	}else if(tree->type == WHILE){
 
+		NODE* condition = tree->left;
+		NODE* loopCode = tree->right;
+		while(evalCondition(condition)){
+
+			interpret0(loopCode,answerBranch);
+		}
 
 		*answerBranch = 0;
 
+		Value zero;
+		zero.isFunction = 0;
+		zero.valueType.intValue = 0;
+
+		return zero;
+
+	}else if(tree->type != LEAF){
+
+		*answerBranch = 0;
+		int* leftBranch = (int*)malloc(sizeof(int));
+		*leftBranch = 0;
+
 		if(tree->left != NULL){
 
-			int* leftBranch = (int)malloc(sizeof(int));
-			int leftAnswer = interpret0(tree->left,leftBranch);
+			Value leftAnswer = interpret0(tree->left,leftBranch);
 
-			if(leftBranch){
+			if(*leftBranch){
 
 				found = leftAnswer;
 				*answerBranch = 1;
 				free(leftBranch);
+
 			}
 		}
 
-		if(tree->right != NULL){
+		if(tree->right != NULL && *leftBranch != 1){
 
-			int* rightBranch = (int)malloc(sizeof(int));
-			int rightAnswer = interpret0(tree->right,rightBranch);
+			int* rightBranch = (int*)malloc(sizeof(int));
+			Value rightAnswer = interpret0(tree->right,rightBranch);
 
-			if(rightBranch){
+			if(*rightBranch){
 
 				found = rightAnswer;
 				*answerBranch = 1;
@@ -129,21 +146,36 @@ int interpret0(NODE* tree,int* answerBranch){
 			}
 		}
 
+
+
 	}
 
 	return found;
 
 }
 
-int evalFunction(NODE* tree){
+Value evalFunction(NODE* tree,int backTrack){
 
-	TOKEN* functionBody = (TOKEN*)lookup_token(((TOKEN*)tree->left->left)->lexeme);
-	NODE* body = (NODE*) functionBody->next;
-	pushStack();
-	parseParameters(body->left->right->right,tree->right);
+	Value functionVal;
+	if(tree->left->type == APPLY){
 
+		functionVal = evalFunction(tree->left,backTrack);
+
+	}else{
+
+		char* functionName = ((TOKEN*)tree->left->left)->lexeme;
+		functionVal = getValue(functionName);
+
+	}
+
+	Closure* function = functionVal.valueType.closure;
+	pushStack(function->env,((TOKEN*)tree->left->left->left)->lexeme);
+	NODE* functionBody = function->functionBody;
+	if(functionBody->left->right->right != NULL){
+		parseParameters(functionBody->left->right->right,tree->right,backTrack);
+	}
 	int* answerBranch = (int*)malloc(sizeof(int));
-	int retValue = interpret0(body->right,answerBranch);
+	Value retValue = interpret0(functionBody->right,answerBranch);
 	popStack();
 	return retValue;
 
@@ -155,18 +187,17 @@ struct Parameter{
 	struct Parameter *last;
 };
 
-void parseParameters(NODE* parameter,NODE* argument){
+void parseParameters(NODE* parameter,NODE* argument,int backtrack){
 
 	if(parameter->type == ','){
 
-		parseParameters(parameter->left,argument->left);
-		parseParameters(parameter->right,argument->right);
+		parseParameters(parameter->left,argument->left,backtrack);
+		parseParameters(parameter->right,argument->right,backtrack);
 
 	}else{
 
 		TOKEN* parToken = (TOKEN*)parameter->right->left;
-		union Value value;
-		value.intValue = backTrackEvalExp(argument);
+		Value value = backTrackEvalExp(argument,backtrack+1);
 		addSymbol(parToken->lexeme,value);
 
 	}
@@ -174,95 +205,111 @@ void parseParameters(NODE* parameter,NODE* argument){
 
 
 
-int evalExp0(NODE* tree,int backtrack){
+Value evalExp0(NODE* tree,int backTrack){
 
-	if(tree == NULL) return 0;
-	if(tree->type == APPLY) return evalFunction(tree);
+	Value zero;
+	zero.isFunction = 0;
+	zero.valueType.intValue = 0;
+	if(tree == NULL) return zero;
+	if(tree->type == APPLY) return evalFunction(tree,backTrack);
 
 	if(tree->type == LEAF){
 
 		TOKEN* leaf = (TOKEN*)tree->left;
 		if(leaf->type == IDENTIFIER){
 
-			if(backtrack){
-				return backTrackValue(leaf->lexeme).intValue;
+			Value value;
+			if(backTrack > 0){
+				value = backTrackValue(leaf->lexeme,backTrack);
 			}else{
-				return getValue(leaf->lexeme).intValue;
+				value = getValue(leaf->lexeme);
 			}
+
+			return value;
 
 
 		}else{
 
-			return ((TOKEN*)tree->left)->value;
+			Value value;
+			value.isFunction = 0;
+			value.valueType.intValue = ((TOKEN*)tree->left)->value;
+			return value;
 		}
 
 	}else{
 
-		int valueLeft = evalExp0(tree->left,backtrack);
-		int valueRight = evalExp0(tree->right,backtrack);
+		int valueLeft = evalExp0(tree->left,backTrack).valueType.intValue;
+		int valueRight = evalExp0(tree->right,backTrack).valueType.intValue;
+		int finalValue;
 
 		if(tree->type == '+'){
 
-			return valueLeft + valueRight;
+			finalValue = valueLeft + valueRight;
 
 		}else if(tree->type == '-'){
 
-			return valueLeft - valueRight;
+			finalValue = valueLeft - valueRight;
 
 
 		}else if(tree->type == '*'){
 
-			return valueLeft * valueRight;
+			finalValue = valueLeft * valueRight;
 
 		}else if(tree->type == '/'){
 
-			return valueLeft / valueRight;
+			finalValue = valueLeft / valueRight;
 
 		}else{
 
 			if(valueLeft != 0){
 
-				return valueLeft;
+				finalValue = valueLeft;
 
 			}else{
 
-				return 0;
+				finalValue = 0;
 
 			}
 		}
+
+		Value ret;
+		ret.isFunction = 0;
+		ret.valueType.intValue = finalValue;
+
+		return ret;
 	}
 
 }
 
-int evalExp(NODE* tree){
+Value evalExp(NODE* tree){
 
 	return evalExp0(tree,0);
 }
 
-int backTrackEvalExp(NODE* tree){
+Value backTrackEvalExp(NODE* tree,int backTrack){
 
-	return evalExp0(tree,1);
+	return evalExp0(tree,backTrack);
 }
 
 int evalCondition(NODE* tree){
 
-	if(tree->type == APPLY) return evalFunction(tree);
+	if(tree->type == APPLY) return evalFunction(tree,0).valueType.intValue;
 
 	if(tree->type == EQ_OP){
 
-		return evalExp(tree->left) == evalExp(tree->right);
+		return evalExp(tree->left).valueType.intValue == evalExp(tree->right).valueType.intValue;
 
 	}else if(tree->type == NE_OP){
 
-		return evalExp(tree->left) != evalExp(tree->right);
+		return evalExp(tree->left).valueType.intValue != evalExp(tree->right).valueType.intValue;
 
 	}else if(tree->type == LE_OP){
 
-		return evalExp(tree->left) <= evalExp(tree->right);
+		return evalExp(tree->left).valueType.intValue <= evalExp(tree->right).valueType.intValue;
 
 	}else if(tree->type == GE_OP){
 
-		return evalExp(tree->left) >= evalExp(tree->right);
+		return evalExp(tree->left).valueType.intValue >= evalExp(tree->right).valueType.intValue;
 	}
 
 	return ((TOKEN*)tree->left)->value;

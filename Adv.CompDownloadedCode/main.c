@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 //#include "nodes.h"
 //#include "C.tab.h"
@@ -116,11 +117,12 @@ int main(int argc, char** argv)
     printf("--C COMPILER\n");
     yyparse();
     tree = ans;
-   // print_tree(tree);
-   // printf("Answer: %d\n",interpret(tree,0));
+
+    //print_tree(tree);
+    printf("Answer: %d\n",interpret(tree,0));
     //testFunc();
 
-    compileToAssembly(tree);
+    //compileToAssembly(tree);
     //compile(tree);
     //test_func();
     return 0;

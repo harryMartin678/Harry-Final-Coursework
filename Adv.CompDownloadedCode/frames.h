@@ -8,16 +8,46 @@
 #include "nodes.h"
 #include "C.tab.h"
 
-union Value{
+struct Closure{
+
+	NODE* functionBody;
+	struct Frame* env;
+};
+union ValueType{
 
 	int intValue;
-	NODE* functionBody;
+	struct Closure* closure;
 };
-void pushStack();
+
+struct Value{
+
+	int isFunction;
+	union ValueType valueType;
+};
+
+struct Frame{
+
+	struct SymbolNode* listHead;
+	struct Frame* next;
+	struct Frame* last;
+	struct Frame* closure;
+	char* functionName;
+	int no;
+};
+
+typedef struct Frame Frame;
+
+typedef struct Value Value;
+typedef union ValueType ValueType;
+typedef struct Closure Closure;
+
+void pushStack(struct Frame* env,char* functionName);
 void popStack();
-void addSymbol(char* symbol,union Value value);
-union Value getValue(char* symbol);
-union Value backTrackValue(char* symbol);
+void addSymbol(char* symbol,Value value);
+Frame* getEnvironment();
+//void addSymbol0(char* symbol,Value value,int isClosure);
+Value getValue(char* symbol);
+Value backTrackValue(char* symbol,int backTrack);
 void changeAllInFrame(int amount);
-union Value getValueByEquality(char* symbol);
-union Value getLastValue();
+Value getValueByEquality(char* symbol);
+Value getLastValue();
