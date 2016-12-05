@@ -1,14 +1,15 @@
 int main(){
 
-	int n = 5;
-	int a = 2;
-	int answer = 1;
+	int a = 5;
 
-	while(n >= 1){
+	if(a == 5){
 
-		answer = answer * a;
-		n = n - 1;
+		a = 2;
+
+	}else{
+
+		a = 0;
 	}
 
-	return answer;
+	return a;
 }

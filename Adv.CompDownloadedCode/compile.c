@@ -27,6 +27,7 @@
 typedef struct TacLine TacLine;
 
 int temp_count = 0;
+int label_count = 0;
 
 char* MAINSTRING = "main";
 char* IFSTRING = "IF";
@@ -81,13 +82,13 @@ struct TypeValue{
 	int type;
 };
 
-void printVarAssignment(char* variable, char* variable2,char op){
+void printVarAssignment(char* variable, char* variable2,int op){
 
 	printf("%s %c %s;\n",variable,op,variable2);
 
 }
 
-void createVarAssignment(char* variable, char* variable2,char op,int isVar1Temp,int isVar2Temp){
+void createVarAssignment(char* variable, char* variable2,int op,int isVar1Temp,int isVar2Temp){
 
 	TacLine* tacline = (TacLine*)malloc(sizeof(TacLine));
 	tacline->variable = variable;
@@ -386,6 +387,7 @@ struct TypeValue compile0(NODE* tree,int tabs){
 	case '/':
 	case '<':
 	case '>':
+	case EQ_OP:
 		//EquationState* state = parseEquation(tree,0);
 		//printEquations(state);
 		//printEquations(tree);
@@ -431,16 +433,36 @@ struct TypeValue compile0(NODE* tree,int tabs){
 		;
 		//printTabs(tabs);
 		struct TypeValue condition = compile0(tree->left,tabs+1);
-		printf("IF t%d:\n",condition.value);
+		if(condition.type == 0){
+
+			printf("IF %d:\n",condition.value);
+
+		}else if(condition.type == 1){
+
+			printf("IF $t%d:\n",condition.value);
+
+		}else{
+
+			printf("IF %s:\n",condition.lexeme);
+		}
+
+		char* ifLabel;
+		int labelC = getLabelCount();
+		asprintf(&ifLabel,"if%d",labelC);
 		//createSimpleInstruct(IFSTRING,condition.value,condition.type == 1,'C');
-		createInstruction(IFSTRING,condition.value,condition.type == 1,1,0,'C');
+		createInstruction(ifLabel,condition.value,condition.type == 1,1,0,'C');
+		createStatement0(ifLabel,0);
 		compile0(tree->right,tabs+1);
 
 		break;
 
 	case ELSE:
 		compile0(tree->left,tabs+1);
+		char* elseLabel;
+		int labelE = getLabelCount();
+		asprintf(&elseLabel,"else%d",labelE);
 		printf("ELSE: \n");
+		createStatement0(elseLabel,0);
 		compile0(tree->right,tabs+1);
 		break;
 	case LEAF:
@@ -479,13 +501,16 @@ struct TypeValue compile0(NODE* tree,int tabs){
 	return n;
 }
 
-
-
 void createStatement(char* statement){
+
+	createStatement0(statement,1);
+}
+
+void createStatement0(char* statement,int isFunction){
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
 	line->variable = statement;
-	line->isStatement = 1;
+	line->isStatement = 1 + isFunction;
 	line->isVariableEq = 0;
 	line->isNext = 0;
 	line->operator = 'D';
@@ -510,7 +535,7 @@ void createSimpleInstruct(char* variable,int operand1,int isVar1,int op){
 	addToQueue(line);
 }
 
-void createInstruction(char* variable,int operand1,int isVar1, int operand2,int isVar2, char operator){
+void createInstruction(char* variable,int operand1,int isVar1, int operand2,int isVar2, int operator){
 
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
@@ -562,13 +587,20 @@ void printSimpleAssignment(char* var, int value, int isVar){
 	printf(";\n");
 }
 
-void printTacLine(char* var,char op, struct TypeValue left, struct TypeValue right){
+void printTacLine(char* var,int op, struct TypeValue left, struct TypeValue right){
 
 	//printf("t%d = ",var);
 	printf("%s = ",var);
 
 	printOperand(left,0);
-	printf(" %c ",op);
+	if(op == EQ_OP){
+
+		printf(" == ");
+	}else{
+
+		printf(" %c ",op);
+	}
+
 	printOperand(right,1);
 
 	printf(";\n");
@@ -598,6 +630,11 @@ void resetTemp(){
 int genTemp(){
 
 	return ++temp_count;
+}
+
+int getLabelCount(){
+
+	return ++label_count;
 }
 
 int reuseTemp(){
@@ -730,6 +767,10 @@ void convertToAssembly(TacLine* line,AssemblyContext* context){
 	case '>':
 		instruct = "sgt";
 		break;
+	case EQ_OP:
+		//printf("is eq_op\n");
+		instruct = "seq";
+		break;
 	case '=':
 		if(line->isVariableEq){
 
@@ -758,7 +799,9 @@ void convertToAssembly(TacLine* line,AssemblyContext* context){
 		}
 		break;
 	case 'C':
-		instruct = "beq";
+
+		printIfStatement(line);
+		hasPrinted = 1;
 		break;
 
 	case 'P':
@@ -810,13 +853,21 @@ void convertToAssembly(TacLine* line,AssemblyContext* context){
 
 }
 
+void printIfStatement(TacLine* line){
+
+	printf("beq ");
+	printAssemOperand(&line->operand1,line->isVar1,0);
+	printAssemOperand(&line->operand2,line->isVar2,0);
+	printf("%s\n",line->variable);
+}
+
 void printReturnStatementInstruct(void* retValue, int isVar, int isTemp,AssemblyContext* context){
 
 	if(isVar){
 
-		int offset = getValueByEquality((char*)retValue).intValue;
+		int offset = getValueByEquality((char*)retValue).valueType.intValue;
 		char* newLine;
-		asprintf("lw $a0, %d($fp)\n",offset);
+		printf("lw $a0, %d($fp)\n",offset);
 
 	}else if(isTemp){
 
@@ -881,34 +932,39 @@ void printAssemInstruct(char* instruct,char* variable, int operand1, int isVar1,
 	//printf("Assem Instruct: %s \n",instruct);
 	if(isStatement){
 
-		if(context->currentFunction != NULL){
-			printf(".end %s\n",context->currentFunction);
+		if(isStatement == 2){
+			if(context->currentFunction != NULL){
+				printf(".end %s\n",context->currentFunction);
+			}
+
+			//variable
+
+			pushStack(NULL,"");
+
+			context->currentFunction = variable;
+			printf("%s:\n",variable);
+
+			int bytesToAll = getBytesToAllocation(variable);
+
+			printf("li $v0, 9\n");
+			printf("li $a0,%d\n",bytesToAll);
+			printf("syscall\n");
+			printf("sw $ra, ($v0)\n");
+			printf("sw $fp, 4($v0)\n");
+
+			//if(strcmp(variable,MAINSTRING) != 0){
+
+				//printf("lw $t0, 4($fp)\n");
+				//printf("sw $t0, 4($v0)\n");
+
+			setMemoryOffset(8);
+			//}
+			printf("move $fp, $v0");
+
+		}else{
+
+			printf("%s:",variable);
 		}
-
-		//variable
-
-		pushStack();
-
-		context->currentFunction = variable;
-		printf("%s:\n",variable);
-
-		int bytesToAll = getBytesToAllocation(variable);
-
-		printf("li $v0, 9\n");
-		printf("li $a0,%d\n",bytesToAll);
-		printf("syscall\n");
-		printf("sw $ra, ($v0)\n");
-		printf("sw $fp, 4($v0)\n");
-
-		//if(strcmp(variable,MAINSTRING) != 0){
-
-			//printf("lw $t0, 4($fp)\n");
-			//printf("sw $t0, 4($v0)\n");
-
-		setMemoryOffset(8);
-		//}
-		printf("move $fp, $v0");
-
 
 	}else if(isVariableEq){
 
@@ -916,14 +972,14 @@ void printAssemInstruct(char* instruct,char* variable, int operand1, int isVar1,
 		//char* stackPos;
 		if(strcmp(instruct,"sw") == 0){
 
-			int value = addNextMemLoc(variable).intValue;
+			int value = addNextMemLoc(variable).valueType.intValue;
 			//printf("sw: %s %s %d($fp)",instruct,variable2,value);
 			printf("%s %s %d($fp)",instruct,variable2,value);
 
 		}else if(strcmp(instruct,"lw") == 0){
 
 			//printf("Enter lw one\n");
-			int offset = getValueByEquality(variable2).intValue;
+			int offset = getValueByEquality(variable2).valueType.intValue;
 			//printf("Enter lw two\n");
 			//intToString("",offset,"($fp)",&stackPos);
 			printf("%s %s %d($fp)",instruct,variable,offset);

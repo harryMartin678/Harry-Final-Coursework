@@ -178,16 +178,22 @@ void setMemoryOffset(int offset){
 	currentOffset = offset;
 }
 
-union Value addNextMemLoc(char* symbol){
+Value addNextMemLoc(char* symbol){
 
-	union Value value = getLastValue();
-	value.intValue += 4;
-	if(value.intValue == 4){
-		value.intValue += currentOffset;
+	if(!containsSymbol(symbol)){
+		Value value = getLastValue();
+		value.valueType.intValue += 4;
+		if(value.valueType.intValue == 4){
+			value.valueType.intValue += currentOffset;
+		}
+		addSymbol(symbol,value);
+		return value;
+	}else{
+
+		return getValueByEquality(symbol);
 	}
-	addSymbol(symbol,value);
 
-	return value;
+
 }
 
 

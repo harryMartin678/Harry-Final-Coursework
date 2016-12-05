@@ -19,7 +19,7 @@ struct TacLine{
 	int isVar1;
 	int operand2;
 	int isVar2;
-	char operator;
+	int operator;
 	int isSimple;
 	int isStatement;
 	int isVariableEq;

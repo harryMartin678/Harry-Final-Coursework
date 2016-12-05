@@ -24,7 +24,7 @@ Param* getParam(int no);
 void calculateFunctionInfo(struct TacLine* lines);
 int getMaxParams();
 void printFunctionInfo();
-union Value addNextMemLoc(char* symbol);
+Value addNextMemLoc(char* symbol);
 int getBytesToAllocation(char* symbol);
 void setMemoryOffset(int offset);
 #endif /* MIPSMEMORYINFO_H_ */

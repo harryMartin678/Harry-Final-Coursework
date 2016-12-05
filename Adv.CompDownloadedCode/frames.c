@@ -56,6 +56,7 @@ typedef union ValueType ValueType;
 
 void getValueFromFrame(Frame* frame,char* symbol,int comparePointer,
 		struct SymbolNode** finalResult);
+void addSymbol0(char* symbol,Value value,int comparePointer);
 
 
 void pushStack(Frame* env,char* functionName){
@@ -114,7 +115,38 @@ Frame* getEnvironment(){
 	return currentFrame;
 }
 
-void addSymbol(char* symbol,Value value){
+void addSymbol(char* symbol, Value value){
+
+	addSymbol0(symbol,value, 1);
+}
+
+void addSymbolByEquality(char* symbol, Value value){
+
+	addSymbol0(symbol,value,0);
+}
+
+int containsSymbol(char* symbol){
+
+	if(currentFrame == NULL || currentFrame->listHead == NULL){
+
+		return 0;
+	}
+
+	struct SymbolNode* tranverse = currentFrame->listHead;
+
+	while(tranverse != NULL){
+
+		if(strcmp(tranverse->symbol,symbol) == 0){
+
+			return 1;
+		}
+	}
+
+	return 0;
+
+}
+
+void addSymbol0(char* symbol,Value value,int comparePointer){
 
 
 	//printf("ENTER addSymbol: %s %d %d \n",symbol,value.intValue,currentFrame->no);
@@ -129,7 +161,8 @@ void addSymbol(char* symbol,Value value){
 
 		struct SymbolNode* tranverse = currentFrame->listHead;
 
-		while(tranverse->next != NULL && tranverse->symbol != symbol){
+		while(tranverse->next != NULL && ((comparePointer && tranverse->symbol != symbol)
+				|| (!comparePointer && strcmp(tranverse->symbol,symbol) == 0))){
 
 			tranverse = tranverse->next;
 
@@ -190,12 +223,12 @@ Value getValue0(char* symbol,int backTrack,int comparePointer){
 	}
 
 
-	printf("enter get value %d\n",initialBackTrack);
+	//printf("enter get value %d\n",initialBackTrack);
 	if(closureEnv != NULL){
 
 		printFrame(closureEnv);
 	}
-	printf("final result = %d, symbol: %s\n",finalResult == NULL,symbol);
+	//printf("final result = %d, symbol: %s\n",finalResult == NULL,symbol);
 	return finalResult->value;
 }
 
