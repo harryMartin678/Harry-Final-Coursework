@@ -24,10 +24,10 @@ Param* getParam(int no);
 void calculateFunctionInfo(struct TacLine* lines);
 int getMaxParams();
 void printFunctionInfo();
-Value addNextMemLoc(char* symbol);
+Value addNextMemLoc(char* symbol,int isVariableCreation,int closureNo);
 int getBytesToAllocation(char* symbol);
 void setMemoryOffset(int offset);
 int hasParent(char* functionName);
 char* getParent(char* functionName);
-addFunctonToFrame(char* functionName);
+void addFunctonToFrame(char* functionName);
 #endif /* MIPSMEMORYINFO_H_ */

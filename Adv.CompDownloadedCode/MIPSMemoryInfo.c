@@ -77,7 +77,8 @@ void calculateFunctionInfo(struct TacLine* lines){
 
 	while(next != NULL){
 
-		if(next->operator == '=' && next->variable[0] != '$'){
+		if(next->operator == '=' && next->variable[0] != '$'
+				&& next->isVariableCreation){
 			//assignment
 			current->Size += 4;
 
@@ -87,6 +88,10 @@ void calculateFunctionInfo(struct TacLine* lines){
 			currentFuncParams ++;
 
 		}else if(next->isRegisterFunctionCall){
+
+			current->Size += 4;
+
+		}else if(next->operator == 'C'){
 
 			current->Size += 4;
 
@@ -101,7 +106,7 @@ void calculateFunctionInfo(struct TacLine* lines){
 			current = newFunctionInfo(context);
 			functionCount++;
 			current->name = next->variable;
-			current->Size = 16;
+			current->Size = 8;
 			if(currentFuncParams > maxParams){
 
 				maxParams = currentFuncParams;
@@ -153,10 +158,12 @@ void printFunctionInfo(){
 
 	while(next != NULL){
 
-		if(next->endOfList){
+		if(next == NULL){
 
 			break;
 		}
+
+		printf("Function Info: %s %d \n",next->name,next->Size);
 
 		next = next->nextFunction;
 	}
@@ -219,9 +226,9 @@ void setMemoryOffset(int offset){
 	currentOffset = offset;
 }
 
-Value addNextMemLoc(char* symbol){
+Value addNextMemLoc(char* symbol,int isVariableCreation,int* closureNo){
 
-	if(!containsSymbol(symbol)){
+	if(isVariableCreation){
 		Value value = getLastValue();
 		value.isFunction = 0;
 		value.valueType.intValue += 4;
@@ -232,8 +239,7 @@ Value addNextMemLoc(char* symbol){
 		return value;
 	}else{
 		//need to update values in closure
-		int closureNo;
-		return getValueByEquality(symbol,&closureNo);
+		return getValueByEquality(symbol,closureNo);
 	}
 
 

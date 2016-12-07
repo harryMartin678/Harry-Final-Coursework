@@ -156,7 +156,7 @@ int containsSymbol(char* symbol){
 void addSymbol0(char* symbol,Value value,int comparePointer){
 
 
-	//printf("ENTER addSymbol: %s %d %d \n",symbol,value.intValue,currentFrame->no);
+	//printf("ENTER addSymbol: %s %d %d \n",symbol,value.valueType.intValue,currentFrame->no);
 	if(currentFrame->listHead == NULL){
 
 		currentFrame->listHead = (struct SymbolNode*)malloc(sizeof(struct SymbolNode));
@@ -211,9 +211,11 @@ void printFrame(Frame* frame){
 
 struct SymbolNode* getValue0(char* symbol,int backTrack,int comparePointer){
 
+	//printf("get Value: %s\n",symbol);
 	Frame* frame = currentFrame;
 	struct SymbolNode* finalResult = NULL;
 
+	//printf("currentFrame No: %d  backtrack: %d\n",currentFrame->no,backTrack);
 	int initialBackTrack = backTrack;
 	//Frame* thisClosureEnv = closureEnv;
 	while(backTrack-- > 0){
@@ -226,25 +228,27 @@ struct SymbolNode* getValue0(char* symbol,int backTrack,int comparePointer){
 
 	getValueFromFrame(frame,symbol,comparePointer,&finalResult);
 
+	//printf("1: %d\n",finalResult == NULL);
 	Frame* thisClosureEnv = frame->closure;
 	int closureNo = 0;
-	if(finalResult == NULL && thisClosureEnv != NULL){
 
-		while(finalResult == NULL && thisClosureEnv != NULL){
-			//printf("1: %s is null %d\n",symbol,finalResult == NULL);
-			getValueFromFrame(thisClosureEnv,symbol,comparePointer,&finalResult);
-			thisClosureEnv = thisClosureEnv->closure;
-			closureNo++;
-		}
-		///printf("2: %s is null %d\n",symbol,finalResult == NULL);
+	while(finalResult == NULL && thisClosureEnv != NULL){
+		//printf("1: %s is null %d\n",symbol,finalResult == NULL);
+		getValueFromFrame(thisClosureEnv,symbol,comparePointer,&finalResult);
+		thisClosureEnv = thisClosureEnv->closure;
+		closureNo++;
 	}
+		///printf("2: %s is null %d\n",symbol,finalResult == NULL);
 
+
+	//printf("2: %d %d\n",finalResult == NULL,closureNo);
 	//printf("3: %s is null %d\n",symbol,finalResult == NULL);
 	if(finalResult == NULL){
 
 		getValueFromFrame(globalFrame,symbol,comparePointer,&finalResult);
 	}
 
+	//printf("3: %d\n",finalResult == NULL);
 	//printf("4: %s is null %d\n",symbol,finalResult == NULL);
 	//printf("enter get value %d\n",initialBackTrack);
 	//if(thisClosureEnv != NULL){

@@ -26,6 +26,8 @@ struct TacLine{
 	int isVariableEq;
 	int isNext;
 	int isRegisterFunctionCall;
+	int isVariableCreation;
+	int thereIsElse;
 	struct TacLine* next;
 };
 
