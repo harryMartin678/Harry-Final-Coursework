@@ -119,9 +119,10 @@ int main(int argc, char** argv)
     tree = ans;
 
     //print_tree(tree);
-   // printf("Answer: %d\n",interpret(tree,0));
+    //printf("Answer: %d\n",interpret(tree,0));
     //testFunc();
 
+    //print_tree(tree);
     compileToAssembly(tree);
     //compile(tree);
     //test_func();

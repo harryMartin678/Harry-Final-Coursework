@@ -29,4 +29,5 @@ int getBytesToAllocation(char* symbol);
 void setMemoryOffset(int offset);
 int hasParent(char* functionName);
 char* getParent(char* functionName);
+addFunctonToFrame(char* functionName);
 #endif /* MIPSMEMORYINFO_H_ */

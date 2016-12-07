@@ -1,19 +1,15 @@
-int f(int a,int b){
+function f(int a){
 
-	int g(int a){
+	int g(int b){
 
-		int t(int a){
-
-			return b;
-		}
-		return t(a);
+		return a*b;
 	}
 
-	return g(a);
+	return g;
 }
 
 
 int main(){
 
-	return f(5,10);
+	return f(5)(10);
 }

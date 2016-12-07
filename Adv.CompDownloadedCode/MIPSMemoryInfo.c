@@ -86,6 +86,10 @@ void calculateFunctionInfo(struct TacLine* lines){
 			current->Size += 4;
 			currentFuncParams ++;
 
+		}else if(next->isRegisterFunctionCall){
+
+			current->Size += 4;
+
 		}else if(next->operator == 'D'){
 
 			char* context = NULL;
@@ -219,6 +223,7 @@ Value addNextMemLoc(char* symbol){
 
 	if(!containsSymbol(symbol)){
 		Value value = getLastValue();
+		value.isFunction = 0;
 		value.valueType.intValue += 4;
 		if(value.valueType.intValue == 4){
 			value.valueType.intValue += currentOffset;
@@ -226,10 +231,20 @@ Value addNextMemLoc(char* symbol){
 		addSymbol(symbol,value);
 		return value;
 	}else{
-		return getValueByEquality(symbol);
+		//need to update values in closure
+		int closureNo;
+		return getValueByEquality(symbol,&closureNo);
 	}
 
 
+}
+
+void addFunctonToFrame(char* functionName){
+
+	Value value;
+	value.isFunction = 1;
+	value.valueType.intValue = 0;
+	addSymbol(functionName,value);
 }
 
 
