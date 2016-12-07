@@ -19,5 +19,5 @@ function cplus(int a){
 
 int main(){
 
-	return twice(fact)(3);
+	return cplus(5)(5);
 }

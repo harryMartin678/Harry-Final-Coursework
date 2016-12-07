@@ -1,15 +1,19 @@
-int main(){
+int f(int a,int b){
 
-	int a = 5;
+	int g(int a){
 
-	if(a == 5){
+		int t(int a){
 
-		a = 2;
-
-	}else{
-
-		a = 0;
+			return b;
+		}
+		return t(a);
 	}
 
-	return a;
+	return g(a);
+}
+
+
+int main(){
+
+	return f(5,10);
 }

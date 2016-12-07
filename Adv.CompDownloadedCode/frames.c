@@ -23,7 +23,7 @@ typedef struct Frame Frame;
 
 Frame* currentFrame;
 Frame* globalFrame;
-Frame* closureEnv;
+//Frame* closureEnv;
 
 
 struct Closure{
@@ -44,11 +44,14 @@ struct Value{
 	union ValueType valueType;
 };
 
+typedef struct Value Value;
+
 struct SymbolNode{
 
 	char* symbol;
-	struct Value value;
+	Value value;
 	struct SymbolNode* next;
+	int closureNo;
 };
 
 typedef struct Value Value;
@@ -62,11 +65,11 @@ void addSymbol0(char* symbol,Value value,int comparePointer);
 void pushStack(Frame* env,char* functionName){
 
 	//Frame* oldClosure = closureEnv;
-	closureEnv = env;
-	if(closureEnv != NULL){
+	//closureEnv = env;
+	//if(closureEnv != NULL){
 
-		closureEnv->functionName = functionName;
-	}
+	//	closureEnv->functionName = functionName;
+	//}
 	//env->closure = closureEnv;
 	//printf("\npush stack \n");
 
@@ -78,6 +81,7 @@ void pushStack(Frame* env,char* functionName){
 		currentFrame->no = 1;
 		currentFrame->next = NULL;
 		currentFrame->functionName = functionName;
+		currentFrame->closure = NULL;
 		globalFrame = currentFrame;
 		//printf("push stack list head: %d \n",currentFrame->listHead == NULL);
 
@@ -88,6 +92,7 @@ void pushStack(Frame* env,char* functionName){
 		nextFrame->last = currentFrame;
 		nextFrame->listHead = NULL;
 		nextFrame->no = currentFrame->no + 1;
+		nextFrame->closure = env;
 		currentFrame->next = nextFrame;
 		currentFrame->functionName = functionName;
 		currentFrame = nextFrame;
@@ -140,6 +145,8 @@ int containsSymbol(char* symbol){
 
 			return 1;
 		}
+
+		tranverse = tranverse->next;
 	}
 
 	return 0;
@@ -194,42 +201,61 @@ void printFrame(Frame* frame){
 			tranverse = tranverse->next;
 		}
 		printf("Print Bindings end\n");
+	}else{
+
+		printf("frame is null\n");
 	}
 }
 
 
 
-Value getValue0(char* symbol,int backTrack,int comparePointer){
+struct SymbolNode* getValue0(char* symbol,int backTrack,int comparePointer){
 
 	Frame* frame = currentFrame;
 	struct SymbolNode* finalResult = NULL;
 
 	int initialBackTrack = backTrack;
+	//Frame* thisClosureEnv = closureEnv;
 	while(backTrack-- > 0){
 
 		frame = frame->last;
+		//if(thisClosureEnv != NULL){
+			//thisClosureEnv = thisClosureEnv -> last;
+		//}
 	}
 
 	getValueFromFrame(frame,symbol,comparePointer,&finalResult);
 
-	if(finalResult == NULL && closureEnv != NULL){
+	Frame* thisClosureEnv = frame->closure;
+	int closureNo = 0;
+	if(finalResult == NULL && thisClosureEnv != NULL){
 
-		getValueFromFrame(closureEnv,symbol,comparePointer,&finalResult);
+		while(finalResult == NULL && thisClosureEnv != NULL){
+			//printf("1: %s is null %d\n",symbol,finalResult == NULL);
+			getValueFromFrame(thisClosureEnv,symbol,comparePointer,&finalResult);
+			thisClosureEnv = thisClosureEnv->closure;
+			closureNo++;
+		}
+		///printf("2: %s is null %d\n",symbol,finalResult == NULL);
 	}
 
+	//printf("3: %s is null %d\n",symbol,finalResult == NULL);
 	if(finalResult == NULL){
 
 		getValueFromFrame(globalFrame,symbol,comparePointer,&finalResult);
 	}
 
-
+	//printf("4: %s is null %d\n",symbol,finalResult == NULL);
 	//printf("enter get value %d\n",initialBackTrack);
-	if(closureEnv != NULL){
-
-		printFrame(closureEnv);
+	//if(thisClosureEnv != NULL){
+	if(finalResult == NULL){
+		printf("backtrack: %d symbol: %s %d\n",initialBackTrack,symbol,thisClosureEnv == NULL);
 	}
+		//printFrame(thisClosureEnv);
+	//}
 	//printf("final result = %d, symbol: %s\n",finalResult == NULL,symbol);
-	return finalResult->value;
+	finalResult->closureNo = closureNo;
+	return finalResult;
 }
 
 void getValueFromFrame(Frame* frame,char* symbol,int comparePointer,
@@ -283,17 +309,19 @@ void changeAllInFrame(int amount){
 	}
 }
 
-Value getValueByEquality(char* symbol){
+Value getValueByEquality(char* symbol,int* closureNo){
 
-	return getValue0(symbol,0,0);
+	struct SymbolNode* sym = getValue0(symbol,0,0);
+	*closureNo = sym->closureNo;
+	return sym->value;
 }
 
 Value getValue(char* symbol){
 
-	return getValue0(symbol,0,1);
+	return getValue0(symbol,0,1)->value;
 }
 
 Value backTrackValue(char* symbol,int backTrack){
 
-	return getValue0(symbol,backTrack,1);
+	return getValue0(symbol,backTrack,1)->value;
 }

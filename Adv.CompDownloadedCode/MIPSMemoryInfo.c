@@ -56,6 +56,7 @@ struct FunctionInfo{
 	int Size;
 	char* name;
 	int endOfList;
+	char* parentFunction;
 	struct FunctionInfo* nextFunction;
 };
 
@@ -72,6 +73,7 @@ void calculateFunctionInfo(struct TacLine* lines){
 	FunctionInfo* current;
 	maxParams = 0;
 	int currentFuncParams = 0;
+	int functionCount = 0;
 
 	while(next != NULL){
 
@@ -86,20 +88,54 @@ void calculateFunctionInfo(struct TacLine* lines){
 
 		}else if(next->operator == 'D'){
 
-			current = newFunctionInfo();
+			char* context = NULL;
+			if(functionCount > 0){
+
+				context = current->name;
+			}
+
+			current = newFunctionInfo(context);
+			functionCount++;
 			current->name = next->variable;
-			current->Size = 12;
+			current->Size = 16;
 			if(currentFuncParams > maxParams){
 
 				maxParams = currentFuncParams;
 			}
 			currentFuncParams = 0;
+
+		}else if(next->operator == 'E'){
+
+			functionCount --;
 		}
 
 		next = next->next;
 	}
-	printFunctionInfo();
+	//printFunctionInfo();
 
+}
+
+char* getParent(char* functionName){
+
+	FunctionInfo* next = funcHead;
+
+	while(next != NULL){
+
+		if(strcmp(next->name,functionName) == 0){
+
+			//printf("hasParent: a:{%s} b:{%s} c:{%s}\n",functionName,next->name,next->parentFunction);
+			return next->parentFunction;
+		}
+
+		next = next->nextFunction;
+	}
+
+	return NULL;
+}
+
+int hasParent(char* functionName){
+
+	return getParent(functionName) != NULL;
 }
 
 int getMaxParams(){
@@ -122,11 +158,12 @@ void printFunctionInfo(){
 	}
 }
 
-FunctionInfo* newFunctionInfo(){
+FunctionInfo* newFunctionInfo(char* context){
 
 	FunctionInfo* new = (FunctionInfo*)malloc(sizeof(FunctionInfo));
 	new->nextFunction = NULL;
 	new->endOfList = 1;
+	new->parentFunction = context;
 
 	if(funcHead == NULL){
 
@@ -189,7 +226,6 @@ Value addNextMemLoc(char* symbol){
 		addSymbol(symbol,value);
 		return value;
 	}else{
-
 		return getValueByEquality(symbol);
 	}
 

@@ -17,12 +17,23 @@ union ValueType{
 
 	int intValue;
 	struct Closure* closure;
+
 };
 
 struct Value{
 
 	int isFunction;
 	union ValueType valueType;
+};
+
+typedef struct Value Value;
+
+struct SymbolNode{
+
+	char* symbol;
+	Value value;
+	struct SymbolNode* next;
+	int closureNo;
 };
 
 struct Frame{
@@ -37,7 +48,6 @@ struct Frame{
 
 typedef struct Frame Frame;
 
-typedef struct Value Value;
 typedef union ValueType ValueType;
 typedef struct Closure Closure;
 
@@ -50,6 +60,6 @@ Frame* getEnvironment();
 Value getValue(char* symbol);
 Value backTrackValue(char* symbol,int backTrack);
 void changeAllInFrame(int amount);
-Value getValueByEquality(char* symbol);
+Value getValueByEquality(char* symbol,int* closureNo);
 int containsSymbol(char* symbol);
 Value getLastValue();

@@ -48,7 +48,8 @@ Value interpret0(NODE* tree,int* answerBranch){
 
 			Value functionVal;
 			Closure* closure = (struct Closure*)malloc(sizeof(struct Closure));
-			closure->env = getEnvironment();
+			//closure->env = getEnvironment();
+			//printf("Env: %s For Function: %s\n",closure->env->functionName,function->lexeme);
 			closure->functionBody = tree;
 			functionVal.valueType.closure = closure;
 			functionVal.isFunction = 1;
@@ -157,23 +158,28 @@ Value interpret0(NODE* tree,int* answerBranch){
 Value evalFunction(NODE* tree,int backTrack){
 
 	Value functionVal;
+	char* functionName = ((TOKEN*)tree->left->left)->lexeme;
 	if(tree->left->type == APPLY){
 
+		printf("apply %s\n",((TOKEN*)tree->left->right->left)->lexeme);
 		functionVal = evalFunction(tree->left,backTrack);
 
 	}else{
 
-		char* functionName = ((TOKEN*)tree->left->left)->lexeme;
+		printf("don't apply %s\n",functionName);
 		functionVal = getValue(functionName);
 
 	}
 
 	Closure* function = functionVal.valueType.closure;
-	pushStack(function->env,((TOKEN*)tree->left->left->left)->lexeme);
+
+	printf("Env: %s, for function: %s\n",getEnvironment()->functionName,functionName);
+	pushStack(getEnvironment(),((TOKEN*)tree->left->left->left)->lexeme);
 	NODE* functionBody = function->functionBody;
 	if(functionBody->left->right->right != NULL){
 		parseParameters(functionBody->left->right->right,tree->right,backTrack);
 	}
+
 	int* answerBranch = (int*)malloc(sizeof(int));
 	Value retValue = interpret0(functionBody->right,answerBranch);
 	popStack();
@@ -197,7 +203,7 @@ void parseParameters(NODE* parameter,NODE* argument,int backtrack){
 	}else{
 
 		TOKEN* parToken = (TOKEN*)parameter->right->left;
-		Value value = backTrackEvalExp(argument,backtrack+1);
+		Value value = backTrackEvalExp(argument,backtrack+1); //backTrack+1
 		addSymbol(parToken->lexeme,value);
 
 	}
@@ -207,12 +213,13 @@ void parseParameters(NODE* parameter,NODE* argument,int backtrack){
 
 Value evalExp0(NODE* tree,int backTrack){
 
+	printf("eval Exp backTrack: %d\n",backTrack);
 	Value zero;
 	zero.isFunction = 0;
 	zero.valueType.intValue = 0;
 	if(tree == NULL) return zero;
 	if(tree->type == APPLY) return evalFunction(tree,backTrack);
-
+	printf("not function call\n");
 	if(tree->type == LEAF){
 
 		TOKEN* leaf = (TOKEN*)tree->left;
