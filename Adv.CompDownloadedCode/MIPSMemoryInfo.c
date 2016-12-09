@@ -19,6 +19,7 @@ Param* head;
 void addParam(int value){
 
 	Param* next = (Param*)malloc(sizeof(Param));
+	//printf("malloc: %d\n",sizeof(Param));
 	next->next = NULL;
 
 	if(head == NULL){
@@ -94,6 +95,11 @@ void calculateFunctionInfo(struct TacLine* lines){
 		}else if(next->operator == 'C'){
 
 			current->Size += 4;
+
+			if(next->thereIsElse){
+
+				current->Size += 4;
+			}
 
 		}else if(next->operator == 'D'){
 
@@ -172,6 +178,7 @@ void printFunctionInfo(){
 FunctionInfo* newFunctionInfo(char* context){
 
 	FunctionInfo* new = (FunctionInfo*)malloc(sizeof(FunctionInfo));
+	//printf("malloc: %d\n",sizeof(FunctionInfo));
 	new->nextFunction = NULL;
 	new->endOfList = 1;
 	new->parentFunction = context;
@@ -219,22 +226,24 @@ int getBytesToAllocation(char* symbol){
 }
 
 
-int currentOffset;
+/*int currentOffset;
 
 void setMemoryOffset(int offset){
 
 	currentOffset = offset;
-}
+}*/
 
 Value addNextMemLoc(char* symbol,int isVariableCreation,int* closureNo){
 
 	if(isVariableCreation){
 		Value value = getLastValue();
+		//printf("value: %d\n",value.valueType.intValue);
 		value.isFunction = 0;
 		value.valueType.intValue += 4;
-		if(value.valueType.intValue == 4){
-			value.valueType.intValue += currentOffset;
-		}
+		//printf("Symbol %s Value: %d\n",symbol,value.valueType.intValue);
+		//if(value.valueType.intValue == 4){
+		//	value.valueType.intValue += currentOffset;
+		//}
 		addSymbol(symbol,value);
 		return value;
 	}else{
@@ -245,11 +254,16 @@ Value addNextMemLoc(char* symbol,int isVariableCreation,int* closureNo){
 
 }
 
+int isGlobalFunction(char* symbol){
+
+	return isOnGlobalFrame(symbol);
+}
+
 void addFunctonToFrame(char* functionName){
 
 	Value value;
 	value.isFunction = 1;
-	value.valueType.intValue = 0;
+	value.valueType.intValue = -4;
 	addSymbol(functionName,value);
 }
 

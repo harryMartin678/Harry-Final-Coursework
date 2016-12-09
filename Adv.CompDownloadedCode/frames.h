@@ -11,6 +11,7 @@
 struct Closure{
 
 	NODE* functionBody;
+	char* parentFunctionName;
 	struct Frame* env;
 };
 union ValueType{
@@ -58,7 +59,6 @@ void addSymbolByEquality(char* symbol, Value value);
 Frame* getEnvironment();
 //void addSymbol0(char* symbol,Value value,int isClosure);
 Value getValue(char* symbol);
-Value backTrackValue(char* symbol,int backTrack);
 void changeAllInFrame(int amount);
 Value getValueByEquality(char* symbol,int* closureNo);
 int containsSymbol(char* symbol);

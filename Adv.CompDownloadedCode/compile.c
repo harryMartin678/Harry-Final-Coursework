@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <errno.h>
 //#include "nodes.h"
 //#include "C.tab.h"
 #include "TacLineQueue.h"
@@ -92,6 +93,7 @@ void createVarAssignment(char* variable, char* variable2,int op,int isVar1Temp,i
 		int isVariableCreation){
 
 	TacLine* tacline = (TacLine*)malloc(sizeof(TacLine));
+	//printf("malloc: %d\n",sizeof(TacLine));
 	tacline->variable = variable;
 	tacline->isVar1Temp = isVar1Temp;
 	tacline->isVar2Temp = isVar2Temp;
@@ -143,7 +145,8 @@ void printParam(struct TypeValue value){
 
 void createParam(struct TypeValue value){
 
-	struct TacLine* tacline = (struct TacLine*)malloc(sizeof(TacLine));
+	TacLine* tacline = (TacLine*)malloc(sizeof(TacLine));
+	//printf("malloc: %d\n",sizeof(TacLine));
 	tacline->operator = 'P';
 	tacline->isNext = 0;
 	tacline->isSimple = 0;
@@ -173,7 +176,8 @@ void printPopArg(struct TypeValue value){
 
 void createPopArg(struct TypeValue value){
 
-	TacLine* line = (struct TacLine*)malloc(sizeof(TacLine));
+	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
+	//printf("malloc: %d\n",sizeof(TacLine));
 	line->operator = 'A';
 	line->variable = value.lexeme;
 	line->paramType = value.type;
@@ -218,7 +222,8 @@ struct TypeValue placeInterInTemp(struct TypeValue value){
 
 void createFunctionCall(char* function,int temp,int applyOnTemp){
 
-	struct TacLine* line = (struct TacLine*)malloc(sizeof(struct TacLine));
+	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
+	//printf("malloc: %d\n",sizeof(TacLine));
 	line->variable = function;
 	line->operator = 'F';
 	line->isStatement = 0;
@@ -235,6 +240,9 @@ void createFunctionCall(char* function,int temp,int applyOnTemp){
 void createStatement0(char* statement,int isFunction,char operator){
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
+	//perror("malloc failed");
+	//printf("malloc: %d\n",sizeof(TacLine));
+
 	line->variable = statement;
 	line->isStatement = 1 + isFunction;
 	line->isVariableEq = 0;
@@ -258,6 +266,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 	case 'D':
 
+		resetTemp();
 		//printf("%s \n",((TOKEN*)tree->left->right->left)->lexeme);
 		//tacLine->line = ((TOKEN*)tree->left->right->left)->lexeme;
 		//tacLine->line = "main:";
@@ -269,8 +278,12 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		createStatement(name->lexeme);
 		compile0(tree->left,tabs,variableCreated);
 		compile0(tree->right,tabs+1,variableCreated);
-		char* endState = (char*)malloc((strlen(".end ") + strlen(name->lexeme)) * sizeof(char));
-		strcpy(endState,".end ");
+		char* start = ".end ";
+		char* endState = (char*)malloc((strlen(start) + strlen(name->lexeme) + 1) * sizeof(char));
+		//printf("malloc s: create endstate %d\n",(strlen(".end ") + strlen(name->lexeme)) * sizeof(char));
+		//printf("one: %d\n",strlen(endState));
+		strcpy(endState,start);
+		//printf("two: %d\n",strlen(endState));
 		strcat(endState,name->lexeme);
 		printf("%s\n",endState);
 		createStatement0(endState,3,'E');
@@ -327,7 +340,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 	case APPLY:
 
-		;
+		resetTemp();
 		struct TypeValue onApply;
 		int applyOnFunction = 0;
 		if(tree->left->type == APPLY){
@@ -381,7 +394,8 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 			//char[] line = new char[6+numDigits(value)];
 			char* start = "Return ";
 
-			struct TacLine* line = (struct TacLine*)malloc(sizeof(struct TacLine));
+			TacLine* line = (TacLine*)malloc(sizeof(TacLine));
+			//printf("malloc: %d\n",sizeof(TacLine));
 			line->operator = 'R';
 			line->isRegisterFunctionCall = 0;
 
@@ -392,6 +406,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 				printf("%s %d;\n",start,value.value);
 				line->operand1 = value.value;
 				line->isVar1 = 0;
+
 
 			}else if(value.type == 1){
 
@@ -491,6 +506,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 	case IF:
 		;
 		//printTabs(tabs);
+		resetTemp();
 		struct TypeValue condition = compile0(tree->left,tabs+1,variableCreated);
 		if(condition.type == 0){
 
@@ -512,14 +528,22 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		createInstruction0(ifLabel,condition.value,condition.type == 1,1,0,'C',
 				tree->right->type == ELSE);
 
+
 		if(tree->right->type != ELSE){
 
 			createIfCode(tree,variableCreated,0);
 
 		}
 
-
 		compile0(tree->right,tabs+1,variableCreated);
+
+
+		if(tree->right->type != ELSE){
+			char* endIf;
+			asprintf(&endIf,"end_%d",getLabelCount());
+			createStatement0(endIf,0,'J');
+		}
+
 		//createStatement0(ifLabel,0);
 
 
@@ -527,7 +551,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 	case ELSE:
 
-		;
+		resetTemp();
 		printf("ELSE: \n");
 		compile0(tree->right,tabs+1,variableCreated);
 		createIfCode(tree,variableCreated,1);
@@ -587,7 +611,8 @@ void createIfCode(NODE* tree, int variableCreated,int fromElse){
 
 	char* endIf;
 	asprintf(&endIf,"end_%d",getLabelCount());
-	char* jumpToEnd = (char*)malloc(sizeof(char)*(strlen(endIf) + 4));
+	char* jumpToEnd = (char*)malloc(sizeof(char)*(strlen(endIf) + 5));
+	//printf("malloc: s createIfCode %d\n",sizeof(char)*(strlen(endIf) + 4));
 	strcpy(jumpToEnd,"j ");
 	strcat(jumpToEnd,endIf);
 	char* jumpToEndOp = 'O';
@@ -600,7 +625,17 @@ void createIfCode(NODE* tree, int variableCreated,int fromElse){
 	asprintf(&ifLabel2,"if_%d",getLabelCount());
 	createStatement0(ifLabel2,0,'K');
 	//compile0(tree->left,0,variableCreated);
-	createStatement0(endIf,0,'J');
+	//createStatement0(endIf,0,'J');
+	if(!fromElse){
+
+		compile0(tree->left->left,0,variableCreated);
+
+	}else{
+
+		compile0(tree->left,0,variableCreated);
+		createStatement0(endIf,0,'J');
+	}
+
 }
 
 void createStatement(char* statement){
@@ -611,6 +646,7 @@ void createStatement(char* statement){
 void createSimpleInstruct(char* variable,int operand1,int isVar1,int op){
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
+	//printf("malloc: %d\n",sizeof(TacLine));
 	line->variable = variable;
 	line->operand1 = operand1;
 	line->isVar1 = isVar1;
@@ -634,6 +670,7 @@ void createInstruction0(char* variable,int operand1,int isVar1, int operand2,int
 
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
+	//printf("malloc: %d\n",sizeof(TacLine));
 	line->variable = variable;
 	line->operand1 = operand1;
 	line->isVar1 = isVar1;
@@ -758,7 +795,8 @@ void intToString(char* start,int value,char* end,char** combine){
 	char num[digitsNo];
 	itoa(value,num,10);
 
-	*combine = (char*)malloc(sizeof(char)*(digitsNo + strlen(start) + strlen(end)));
+	*combine = (char*)malloc(sizeof(char)*(digitsNo + strlen(start) + strlen(end) + 1));
+	//printf("malloc: s intToString %d\n",sizeof(char)*(digitsNo + strlen(start) + strlen(end)));
 	strcpy(*combine,start);
 	strcat(*combine,num);
 	strcat(*combine,end);
@@ -802,6 +840,7 @@ void pushFunctionName(char* functionName,AssemblyContext* context){
 	if(context->head == NULL){
 
 		context->head = (FunctionNameNode*)malloc(sizeof(FunctionNameNode));
+		//printf("malloc: %d\n",sizeof(FunctionNameNode));
 		context->head->functionName = functionName;
 		context->head->last = NULL;
 		context->head->next = NULL;
@@ -817,6 +856,7 @@ void pushFunctionName(char* functionName,AssemblyContext* context){
 		}
 
 		next->next = (FunctionNameNode*)malloc(sizeof(FunctionNameNode));
+		//printf("malloc: %d\n",sizeof(FunctionNameNode));
 		next->next->functionName = functionName;
 		next->next->last = next;
 		next->next->next = NULL;
@@ -922,6 +962,7 @@ char* getBlockNo(char* totalName){
 	}
 
 	char* blockNo = (char*)malloc(sizeof(char) * (end - start));
+	//printf("malloc: s getBlockNo %d\n",sizeof(char) * (end - start));
 
 	for(i = start; i <= end; i++){
 
@@ -940,7 +981,7 @@ void printNewBlock(char* blockName){
 	pushStack(getEnvironment(),"");
 	printf("sw $fp, %d($fp)\n",offset);
 	printf("add $fp, $fp, %d\n",offset);
-	setMemoryOffset(0);
+	//setMemoryOffset(0);
 }
 
 void printEndBlock(char* blockName){
@@ -951,7 +992,7 @@ void printEndBlock(char* blockName){
 
 	printf("lw $fp, 0($fp)\n",offset);
 	popStack();
-	setMemoryOffset(4);
+	//setMemoryOffset(4);
 }
 
 
@@ -1082,12 +1123,13 @@ void printFindClosure(int closureNo){
 
 	if(closureNo > 0){
 
-		printf("move $t0, $fp\n");
+		int closureNo;
+		printf("move $v1, $fp\n");
 	}
 	int i = closureNo;
 	while(i-- > 0){
 
-		printf("lw $t0, 0($t0)\n");
+		printf("lw $v1, 0($v1)\n");
 	}
 
 }
@@ -1096,6 +1138,7 @@ void printLw(char* variable, char* variable2){
 
 	int closureNo;
 	Value offset = getValueByEquality(variable2,&closureNo);
+	//printf("closureNo: %d\n",closureNo);
 	//printf("Enter lw two\n");
 	//intToString("",offset,"($fp)",&stackPos);
 	if(offset.isFunction == 0){
@@ -1104,7 +1147,7 @@ void printLw(char* variable, char* variable2){
 
 		if(closureNo > 0){
 
-			printf("lw %s %d($t0)",variable,offset.valueType.intValue);
+			printf("lw %s %d($v1)",variable,offset.valueType.intValue);
 
 		}else{
 
@@ -1117,6 +1160,7 @@ void printLw(char* variable, char* variable2){
 		printf("la $t0, %s\n",variable2);
 		printf("sw $t0, ($v0)\n");
 		printf("sw $fp, 4($v0)\n");
+		//la when returning but lw with passing
 		printf("la %s, ($v0)",variable);
 	}
 }
@@ -1154,13 +1198,19 @@ void printReturnStatementInstruct(void* retValue, int isVar, int isTemp,Assembly
 	//	printf("lw $fp, 4($fp)\n");
 	//}
 
-	printf("lw $ra, 4($fp)\n");
-	printf("lw $fp, ($fp)\n");
+	printLw("$ra","$ra");
+	printf("\n");
+	printLw("$fp","$fp");
+	printf("\n");
+	//printf("lw $ra, 4($fp)\n");
+	//printf("lw $fp, ($fp)\n");
+
+
 //	if(strcmp(context->current->functionName,MAINSTRING) != 0){
 		//printf("lw $s0, 8($fp)\n");
 	//}
 	printf("jr $ra\n");
-	popStack();
+
 }
 
 void printPopArgInstruct(char* variable,AssemblyContext* context){
@@ -1168,7 +1218,7 @@ void printPopArgInstruct(char* variable,AssemblyContext* context){
 	//printf("arg variable: %s\n",variable);
 	printf("lw $t0, %d($a1)\n",context->paramNo*4);
 	printf("sw $t0,%d($fp)\n",(context->paramNo*4) + 8);
-	setMemoryOffset(4);
+	//setMemoryOffset(4);
 	int closureNo;
 	addNextMemLoc(variable,1,&closureNo);
 }
@@ -1190,9 +1240,18 @@ void printFunctionCall(char* function,int temp,AssemblyContext* context,int call
 		printf("jalr $t0\n");
 		printf("move $fp, $s2\n");
 
-	}else{
+	}else if(isGlobalFunction(function)){
 
 		printf("jal %s\n",function);
+
+	}else{
+
+		int closureNo;
+		Value offset = getValueByEquality(function,&closureNo);
+		printFindClosure(closureNo);
+		printf("lw $v1, %d($v1)\n",offset.valueType.intValue);
+		printf("jalr $v1\n");
+
 	}
 
 	printf("move $t%d, $a0\n",temp);
@@ -1202,6 +1261,7 @@ char* getFunctionNameFromEndTag(char* variable){
 
 	int funcNameSize = (strlen(variable) - strlen(".end "))+1;
 	char* functionName = (char*)malloc(funcNameSize * sizeof(char));
+	//printf("malloc: s getFunctionName %d\n",funcNameSize * sizeof(char));
 
 	int f = 0;
 	for(int f = 0; f < funcNameSize-1; f++){
@@ -1235,16 +1295,21 @@ void printAssemInstruct(char* instruct,TacLine* line,AssemblyContext* context){
 				printf(".end %s\n",context->currentFunction);
 			}*/
 
+			addFunctonToFrame(line->variable);
 			//variable
 			if(hasParent(line->variable)){
 
 				printf("j end%s\n",line->variable);
+
 				pushStack(getEnvironment(),"");
-				addFunctonToFrame(line->variable);
 
 			}else{
 
-				pushStack(NULL,"");
+				if(strcmp(line->variable,MAINSTRING) != 0){
+
+					pushStack(NULL,"");
+				}
+
 			}
 
 			//context->currentFunction = variable;
@@ -1258,12 +1323,15 @@ void printAssemInstruct(char* instruct,TacLine* line,AssemblyContext* context){
 			printf("syscall\n");
 			printf("sw $fp, ($v0)\n");
 			printf("sw $ra, 4($v0)\n");
+			int closureNo;
+			addNextMemLoc("$fp",1,&closureNo);
+			addNextMemLoc("$ra",1,&closureNo);
 			//if(strcmp(variable,MAINSTRING) != 0){
 				//printf("sw $s0, 8($v0)\n");
 				//printf("move $s0, $s1\n");
 				//setMemoryOffset(12);
 			//}else{
-				setMemoryOffset(4);
+				//setMemoryOffset(4);
 			//}
 
 			//if(strcmp(variable,MAINSTRING) != 0){
@@ -1292,6 +1360,8 @@ void printAssemInstruct(char* instruct,TacLine* line,AssemblyContext* context){
 						printf("\nend%s:",functionName);
 					}
 				}
+
+				popStack();
 
 			}else{
 
@@ -1411,9 +1481,11 @@ void compileToAssembly(NODE* tree){
 	printf(".text\n.globl\tmain\n");
 	printf("_main:\njal main\nli $v0,10\nsyscall\n.end _main\n");
 	AssemblyContext* context = (AssemblyContext*)malloc(sizeof(AssemblyContext));
+	//printf("malloc: %d\n",sizeof(AssemblyContext));
 	context->head = NULL;
 	context->paramNo = 0;
 	//context->currentFunction = NULL;
+	pushStack(NULL,"");
 	int i;
 	for(i = 0; i < getSize(); i++){
 

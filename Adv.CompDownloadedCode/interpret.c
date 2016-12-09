@@ -13,7 +13,17 @@
 #include "frames.h"
 #include <stdlib.h>
 
-void parseParameters(NODE* parameter,NODE* argument,int backTrack);
+struct Parameter{
+
+	char* symbol;
+	Value value;
+	struct Parameter *last;
+	struct Parameter *next;
+};
+
+typedef struct Parameter Parameter;
+
+void parseParameters(NODE* parameter,NODE* argument,Parameter** nextParam);
 int interpret(NODE* tree);
 Value interpret0(NODE* tree,int* answerBranch);
 Value evalFunction(NODE* tree,int backTrack);
@@ -37,7 +47,6 @@ int interpret(NODE* tree){
 
 Value interpret0(NODE* tree,int* answerBranch){
 
-	//printf("type: %s \n",named(tree->type));
 	Value found;
 
 	if(tree->type == 'D' ){
@@ -48,18 +57,18 @@ Value interpret0(NODE* tree,int* answerBranch){
 
 			Value functionVal;
 			Closure* closure = (struct Closure*)malloc(sizeof(struct Closure));
-			//closure->env = getEnvironment();
-			//printf("Env: %s For Function: %s\n",closure->env->functionName,function->lexeme);
+			closure->env = getEnvironment();
+
 			closure->functionBody = tree;
 			functionVal.valueType.closure = closure;
 			functionVal.isFunction = 1;
-			//value.functionBody = (TOKEN*)tree;
 			addSymbol(function->lexeme,functionVal);
 			*answerBranch = 0;
 			Value ret;
 			ret.isFunction = 0;
 			ret.valueType.intValue = 0;
 			return ret;
+
 		}
 
 	}
@@ -75,19 +84,25 @@ Value interpret0(NODE* tree,int* answerBranch){
 
 		Value evalValue = evalExp(tree->right);
 
+		*answerBranch = 0;
 		addSymbol(((TOKEN*)tree->left->left)->lexeme,evalValue);
 
 		return evalValue;
 
 	}else if(tree->type == IF){
 
+		pushStack(getEnvironment(),"");
 		if(evalCondition(tree->left)){
 
-			return interpret0(tree->right,answerBranch);
+			Value ret = interpret0(tree->right->left,answerBranch);
+			popStack();
+			return ret;
 
 		}else if(tree->right->type == ELSE){
 
-			return interpret0(tree->right->right,answerBranch);
+			Value ret = interpret0(tree->right->right,answerBranch);
+			popStack();
+			return ret;
 
 		}else{
 
@@ -95,18 +110,21 @@ Value interpret0(NODE* tree,int* answerBranch){
 			Value value;
 			value.isFunction = 0;
 			value.valueType.intValue = 0;
+			popStack();
 			return value;
 		}
+
 
 	}else if(tree->type == WHILE){
 
 		NODE* condition = tree->left;
 		NODE* loopCode = tree->right;
+		pushStack(getEnvironment(),"");
 		while(evalCondition(condition)){
 
 			interpret0(loopCode,answerBranch);
 		}
-
+		popStack();
 		*answerBranch = 0;
 
 		Value zero;
@@ -155,29 +173,37 @@ Value interpret0(NODE* tree,int* answerBranch){
 
 }
 
+
+
 Value evalFunction(NODE* tree,int backTrack){
 
 	Value functionVal;
 	char* functionName = ((TOKEN*)tree->left->left)->lexeme;
 	if(tree->left->type == APPLY){
 
-		printf("apply %s\n",((TOKEN*)tree->left->right->left)->lexeme);
 		functionVal = evalFunction(tree->left,backTrack);
 
 	}else{
 
-		printf("don't apply %s\n",functionName);
 		functionVal = getValue(functionName);
 
 	}
 
 	Closure* function = functionVal.valueType.closure;
 
-	printf("Env: %s, for function: %s\n",getEnvironment()->functionName,functionName);
-	pushStack(getEnvironment(),((TOKEN*)tree->left->left->left)->lexeme);
+	Parameter** paramList = (Parameter**)malloc(sizeof(Parameter*));
+	*paramList = NULL;
 	NODE* functionBody = function->functionBody;
 	if(functionBody->left->right->right != NULL){
-		parseParameters(functionBody->left->right->right,tree->right,backTrack);
+		parseParameters(functionBody->left->right->right,tree->right,paramList);
+	}
+
+	pushStack(function->env,((TOKEN*)tree->left->left->left)->lexeme);
+
+	while((*paramList) != NULL){
+
+		addSymbol((*paramList)->symbol,(*paramList)->value);
+		*paramList = (*paramList)->last;
 	}
 
 	int* answerBranch = (int*)malloc(sizeof(int));
@@ -187,24 +213,33 @@ Value evalFunction(NODE* tree,int backTrack){
 
 }
 
-struct Parameter{
 
-	char* symbol;
-	struct Parameter *last;
-};
 
-void parseParameters(NODE* parameter,NODE* argument,int backtrack){
+
+void parseParameters(NODE* parameter,NODE* argument,Parameter** paramList){
 
 	if(parameter->type == ','){
 
-		parseParameters(parameter->left,argument->left,backtrack);
-		parseParameters(parameter->right,argument->right,backtrack);
+		parseParameters(parameter->left,argument->left,paramList);
+		parseParameters(parameter->right,argument->right,paramList);
 
 	}else{
 
 		TOKEN* parToken = (TOKEN*)parameter->right->left;
-		Value value = backTrackEvalExp(argument,backtrack+1); //backTrack+1
-		addSymbol(parToken->lexeme,value);
+		Value value = evalExp(argument);
+		if(*paramList == NULL){
+			*paramList = (Parameter*)malloc(sizeof(Parameter));
+			(*paramList)->last = NULL;
+		}else{
+
+			(*paramList)->next = (Parameter*)malloc(sizeof(Parameter));
+			(*paramList)->next->last = *paramList;
+			*paramList = (*paramList)->next;
+
+		}
+
+		(*paramList)->symbol = parToken->lexeme;
+		(*paramList)->value = value;
 
 	}
 }
@@ -213,24 +248,18 @@ void parseParameters(NODE* parameter,NODE* argument,int backtrack){
 
 Value evalExp0(NODE* tree,int backTrack){
 
-	printf("eval Exp backTrack: %d\n",backTrack);
 	Value zero;
 	zero.isFunction = 0;
 	zero.valueType.intValue = 0;
 	if(tree == NULL) return zero;
 	if(tree->type == APPLY) return evalFunction(tree,backTrack);
-	printf("not function call\n");
 	if(tree->type == LEAF){
 
 		TOKEN* leaf = (TOKEN*)tree->left;
 		if(leaf->type == IDENTIFIER){
 
 			Value value;
-			if(backTrack > 0){
-				value = backTrackValue(leaf->lexeme,backTrack);
-			}else{
-				value = getValue(leaf->lexeme);
-			}
+			value = getValue(leaf->lexeme);
 
 			return value;
 
@@ -293,11 +322,6 @@ Value evalExp(NODE* tree){
 	return evalExp0(tree,0);
 }
 
-Value backTrackEvalExp(NODE* tree,int backTrack){
-
-	return evalExp0(tree,backTrack);
-}
-
 int evalCondition(NODE* tree){
 
 	if(tree->type == APPLY) return evalFunction(tree,0).valueType.intValue;
@@ -317,6 +341,14 @@ int evalCondition(NODE* tree){
 	}else if(tree->type == GE_OP){
 
 		return evalExp(tree->left).valueType.intValue >= evalExp(tree->right).valueType.intValue;
+
+	}else if(tree->type == '<'){
+
+		return evalExp(tree->left).valueType.intValue < evalExp(tree->right).valueType.intValue;
+
+	}else if(tree->type == '>'){
+
+		return evalExp(tree->left).valueType.intValue > evalExp(tree->right).valueType.intValue;
 	}
 
 	return ((TOKEN*)tree->left)->value;

@@ -29,6 +29,7 @@ Frame* globalFrame;
 struct Closure{
 
 	NODE* functionBody;
+	char* parentFunctionName;
 	Frame* env;
 };
 
@@ -60,7 +61,42 @@ typedef union ValueType ValueType;
 void getValueFromFrame(Frame* frame,char* symbol,int comparePointer,
 		struct SymbolNode** finalResult);
 void addSymbol0(char* symbol,Value value,int comparePointer);
+void printFrame(Frame* frame);
+void pushStack(Frame* env,char* functionName);
+void popStack();
+Frame* getEnvironment();
+void addSymbol(char* symbol, Value value);
+void addSymbolByEquality(char* symbol, Value value);
+int containsSymbol(char* symbol);
+void addSymbol0(char* symbol,Value value,int comparePointer);
+int isOnGlobalFrame(char* symbol);
+struct SymbolNode* getValue0(char* symbol,int comparePointer);
+void getValueFromFrame(Frame* frame,char* symbol,int comparePointer,
+		struct SymbolNode** finalResult);
+Value getLastValue();
+void changeAllInFrame(int amount);
+Value getValueByEquality(char* symbol,int* closureNo);
+Value getValue(char* symbol);
 
+
+void printFrame(Frame* frame){
+
+	//if(frame == NULL){
+
+	//	printf("frame is null\n");
+
+	//}else{
+
+	printf("Print Bindings begin \n");
+	struct SymbolNode* tranverse = frame->listHead;
+	while(tranverse != NULL){
+
+		printf("\tBinding %s %d: \n",tranverse->symbol,tranverse->value.valueType);
+		tranverse = tranverse->next;
+	}
+	printf("Print Bindings end\n");
+	//}
+}
 
 void pushStack(Frame* env,char* functionName){
 
@@ -76,6 +112,7 @@ void pushStack(Frame* env,char* functionName){
 	if(currentFrame == NULL){
 
 		currentFrame = (Frame*)malloc(sizeof(Frame));
+		//printf("malloc: %d\n",sizeof(Frame));
 		currentFrame->listHead = NULL;
 		currentFrame->last = NULL;
 		currentFrame->no = 1;
@@ -89,6 +126,7 @@ void pushStack(Frame* env,char* functionName){
 
 		//printCurrentFrame();
 		Frame* nextFrame = (Frame*)malloc(sizeof(Frame));
+		//printf("malloc: %d\n",sizeof(Frame));
 		nextFrame->last = currentFrame;
 		nextFrame->listHead = NULL;
 		nextFrame->no = currentFrame->no + 1;
@@ -153,112 +191,97 @@ int containsSymbol(char* symbol){
 
 }
 
+
 void addSymbol0(char* symbol,Value value,int comparePointer){
 
+	printf("symbol %s\n",symbol);
+	struct SymbolNode* update = getValue0(symbol,comparePointer);
 
-	//printf("ENTER addSymbol: %s %d %d \n",symbol,value.valueType.intValue,currentFrame->no);
-	if(currentFrame->listHead == NULL){
+	if(update == NULL){
 
-		currentFrame->listHead = (struct SymbolNode*)malloc(sizeof(struct SymbolNode));
-		currentFrame->listHead->symbol = symbol;
-		currentFrame->listHead->value = value;
-		currentFrame->listHead->next = NULL;
+		if(currentFrame->listHead == NULL){
 
-	}else{
-
-		struct SymbolNode* tranverse = currentFrame->listHead;
-
-		while(tranverse->next != NULL && ((comparePointer && tranverse->symbol != symbol)
-				|| (!comparePointer && strcmp(tranverse->symbol,symbol) == 0))){
-
-			tranverse = tranverse->next;
-
-		}
-
-		if(tranverse->symbol == symbol){
-
-			tranverse->value = value;
+			currentFrame->listHead = (struct SymbolNode*)malloc(sizeof(struct SymbolNode));
+			currentFrame->listHead->symbol = symbol;
+			currentFrame->listHead->value = value;
+			currentFrame->listHead->next = NULL;
 
 		}else{
+
+			struct SymbolNode* tranverse = currentFrame->listHead;
+			while(tranverse->next != NULL){
+
+				tranverse = tranverse->next;
+
+			}
 
 			tranverse->next = (struct SymbolNode*)malloc(sizeof(struct SymbolNode));
 			tranverse->next->symbol = symbol;
 			tranverse->next->value = value;
 			tranverse->next->next = NULL;
+
 		}
-	}
-
-}
-
-void printFrame(Frame* frame){
-
-	if(frame != NULL){
-		printf("Print Bindings begin %s\n",frame->functionName);
-		struct SymbolNode* tranverse = frame->listHead;
-		while(tranverse != NULL){
-
-			printf("\tBinding %s %d: \n",tranverse->symbol,tranverse->value.valueType.intValue);
-			tranverse = tranverse->next;
-		}
-		printf("Print Bindings end\n");
 	}else{
 
-		printf("frame is null\n");
+		update->value = value;
 	}
+
 }
 
 
 
-struct SymbolNode* getValue0(char* symbol,int backTrack,int comparePointer){
+int isOnGlobalFrame(char* symbol){
 
-	//printf("get Value: %s\n",symbol);
+	struct SymbolNode* next = globalFrame->listHead;
+
+	while(next != NULL){
+
+		if(strcmp(next->symbol,symbol) == 0){
+
+			return 1;
+		}
+
+		next = next->next;
+	}
+
+	return 0;
+}
+
+
+
+struct SymbolNode* getValue0(char* symbol,int comparePointer){
+
+	printf("get value: %s\n",symbol);
 	Frame* frame = currentFrame;
 	struct SymbolNode* finalResult = NULL;
 
-	//printf("currentFrame No: %d  backtrack: %d\n",currentFrame->no,backTrack);
-	int initialBackTrack = backTrack;
-	//Frame* thisClosureEnv = closureEnv;
-	while(backTrack-- > 0){
-
-		frame = frame->last;
-		//if(thisClosureEnv != NULL){
-			//thisClosureEnv = thisClosureEnv -> last;
-		//}
-	}
-
 	getValueFromFrame(frame,symbol,comparePointer,&finalResult);
 
-	//printf("1: %d\n",finalResult == NULL);
 	Frame* thisClosureEnv = frame->closure;
 	int closureNo = 0;
 
 	while(finalResult == NULL && thisClosureEnv != NULL){
-		//printf("1: %s is null %d\n",symbol,finalResult == NULL);
+
 		getValueFromFrame(thisClosureEnv,symbol,comparePointer,&finalResult);
 		thisClosureEnv = thisClosureEnv->closure;
 		closureNo++;
 	}
-		///printf("2: %s is null %d\n",symbol,finalResult == NULL);
 
-
-	//printf("2: %d %d\n",finalResult == NULL,closureNo);
-	//printf("3: %s is null %d\n",symbol,finalResult == NULL);
 	if(finalResult == NULL){
 
 		getValueFromFrame(globalFrame,symbol,comparePointer,&finalResult);
 	}
 
-	//printf("3: %d\n",finalResult == NULL);
-	//printf("4: %s is null %d\n",symbol,finalResult == NULL);
-	//printf("enter get value %d\n",initialBackTrack);
-	//if(thisClosureEnv != NULL){
-	if(finalResult == NULL){
-		printf("backtrack: %d symbol: %s %d\n",initialBackTrack,symbol,thisClosureEnv == NULL);
-	}
-		//printFrame(thisClosureEnv);
+	//if(finalResult == NULL){
+	//	printf("symbol: %s %d\n",symbol,thisClosureEnv == NULL);
 	//}
-	//printf("final result = %d, symbol: %s\n",finalResult == NULL,symbol);
-	finalResult->closureNo = closureNo;
+
+	//printFrame(thisClosureEnv);
+	if(finalResult != NULL){
+		finalResult->closureNo = closureNo;
+	}else{
+		printf("couldn't find %s\n",symbol);
+	}
 	return finalResult;
 }
 
@@ -268,7 +291,8 @@ void getValueFromFrame(Frame* frame,char* symbol,int comparePointer,
 	struct SymbolNode* tranverse = frame->listHead;
 	if(tranverse != NULL){
 
-		while((tranverse->next != NULL && tranverse->symbol != symbol)){
+		while((tranverse->next != NULL && (tranverse->symbol != symbol)
+				|| (!comparePointer && strcmp(tranverse->symbol,symbol) != 0))){
 
 			tranverse = tranverse->next;
 		}
@@ -288,7 +312,7 @@ Value getLastValue(){
 	if(node == NULL){
 
 		Value value;
-		value.valueType.intValue = 0;
+		value.valueType.intValue = -4;
 		return value;
 	}
 
@@ -315,17 +339,17 @@ void changeAllInFrame(int amount){
 
 Value getValueByEquality(char* symbol,int* closureNo){
 
-	struct SymbolNode* sym = getValue0(symbol,0,0);
+	struct SymbolNode* sym = getValue0(symbol,0);
 	*closureNo = sym->closureNo;
 	return sym->value;
 }
 
 Value getValue(char* symbol){
 
-	return getValue0(symbol,0,1)->value;
+	return getValue0(symbol,1)->value;
 }
 
-Value backTrackValue(char* symbol,int backTrack){
+/*Value backTrackValue(char* symbol,int backTrack){
 
 	return getValue0(symbol,backTrack,1)->value;
-}
+}*/

@@ -26,8 +26,9 @@ int getMaxParams();
 void printFunctionInfo();
 Value addNextMemLoc(char* symbol,int isVariableCreation,int closureNo);
 int getBytesToAllocation(char* symbol);
-void setMemoryOffset(int offset);
+//void setMemoryOffset(int offset);
 int hasParent(char* functionName);
 char* getParent(char* functionName);
 void addFunctonToFrame(char* functionName);
+int isGlobalFunction(char* symbol);
 #endif /* MIPSMEMORYINFO_H_ */

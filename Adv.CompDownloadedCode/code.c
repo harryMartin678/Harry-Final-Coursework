@@ -16,8 +16,13 @@ function cplus(int a){
  	return g;
  }
 
+ int g(int a){
+
+	 return a*5;
+ }
 
 int main(){
 
-	return cplus(5)(5);
+	int b = 2;
+	return g(b);
 }
