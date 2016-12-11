@@ -560,7 +560,33 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 	case WHILE:
 
-		printf("WHILE \n");
+		printf("DO \n");
+		char* doLabel;
+		int doLabelCount = getLabelCount();
+		asprintf(&doLabel,"DO_%d:",doLabelCount);
+		createStatement0(doLabel,0,'O');
+		resetTemp();
+		compile0(tree->right,tabs+1,variableCreated);
+		struct TypeValue whileCondition = compile0(tree->left,tabs+1,variableCreated);
+
+		if(whileCondition.type == 0){
+
+			printf("WHILE %d:\n",whileCondition.value);
+
+		}else if(whileCondition.type == 1){
+
+			printf("WHILE $t%d:\n",whileCondition.value);
+
+		}else{
+
+			printf("WHILE %s:\n",whileCondition.lexeme);
+		}
+
+		char* endDo;
+		asprintf(&endDo,"endDO_%d",doLabelCount);
+		createStatement0(endDo,0,'J');
+		createInstruction0(doLabel,whileCondition.value,whileCondition.type == 1,1,0,'C',
+						0);
 
 		break;
 	case LEAF:
@@ -1134,7 +1160,7 @@ void printFindClosure(int closureNo){
 
 }
 
-void printLw(char* variable, char* variable2){
+void printLw(char* variable, char* variable2,int loadAddress){
 
 	int closureNo;
 	Value offset = getValueByEquality(variable2,&closureNo);
@@ -1160,8 +1186,16 @@ void printLw(char* variable, char* variable2){
 		printf("la $t0, %s\n",variable2);
 		printf("sw $t0, ($v0)\n");
 		printf("sw $fp, 4($v0)\n");
+		if(loadAddress){
+
+			printf("la %s, ($v0)",variable);
+
+		}else{
+
+			printf("lw %s, ($v0)",variable);
+		}
 		//la when returning but lw with passing
-		printf("la %s, ($v0)",variable);
+
 	}
 }
 
@@ -1182,7 +1216,7 @@ void printReturnStatementInstruct(void* retValue, int isVar, int isTemp,Assembly
 		//int offset = getValueByEquality((char*)retValue,&closureNo).valueType.intValue;
 		//char* newLine;
 		//printf("lw $a0, %d($fp)\n",offset);
-		printLw("$a0",(char*)retValue);
+		printLw("$a0",(char*)retValue,1);
 		printf("\n");
 
 	}else if(isTemp){
@@ -1198,9 +1232,9 @@ void printReturnStatementInstruct(void* retValue, int isVar, int isTemp,Assembly
 	//	printf("lw $fp, 4($fp)\n");
 	//}
 
-	printLw("$ra","$ra");
+	printLw("$ra","$ra",0);
 	printf("\n");
-	printLw("$fp","$fp");
+	printLw("$fp","$fp",0);
 	printf("\n");
 	//printf("lw $ra, 4($fp)\n");
 	//printf("lw $fp, ($fp)\n");
@@ -1248,9 +1282,17 @@ void printFunctionCall(char* function,int temp,AssemblyContext* context,int call
 
 		int closureNo;
 		Value offset = getValueByEquality(function,&closureNo);
-		printFindClosure(closureNo);
-		printf("lw $v1, %d($v1)\n",offset.valueType.intValue);
-		printf("jalr $v1\n");
+		//calling child function from parent function
+		if(offset.valueType.intValue < 0){
+
+			printf("jal %s\n",function);
+		}else{
+
+			printFindClosure(closureNo);
+			printf("lw $v1, %d($v1)\n",offset.valueType.intValue);
+			printf("jalr $v1\n");
+		}
+
 
 	}
 
@@ -1416,7 +1458,7 @@ void printAssemInstruct(char* instruct,TacLine* line,AssemblyContext* context){
 
 		}else if(strcmp(instruct,"lw") == 0){
 
-			printLw(line->variable,line->variable2);
+			printLw(line->variable,line->variable2,0);
 		}
 
 	}else{

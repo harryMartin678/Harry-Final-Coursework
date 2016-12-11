@@ -23,6 +23,5 @@ function cplus(int a){
 
 int main(){
 
-	int b = 2;
-	return g(b);
+	return twice(g)(5);
 }

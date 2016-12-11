@@ -11,13 +11,15 @@ int pow(int number,int power){
 
 }
 
-function doNTimes(function f, int n){
+function doNTimes(function f, int max){
 
 	int doIt(int a){
 
-		while(n > 0){
+		int n = 0;
+		while(n < max){
 
-			a = f(a);
+			a = f(a,n);
+			n = n + 1;
 		}
 
 		return a;

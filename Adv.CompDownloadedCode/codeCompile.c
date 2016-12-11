@@ -1,14 +1,9 @@
- function twice(function f) {
- 	int g(int x) { return f(f(x)); }
- 	return g;
- }
-
- int m(int a){
-
-	 return a*5;
- }
+function cplus(int a){
+	int add_2(int b){return a + b;}
+	return add_2;
+}
 
 int main(){
 
-	return twice(m)(5);
+	return cplus(10)(10);
 }

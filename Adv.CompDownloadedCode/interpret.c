@@ -26,6 +26,7 @@ typedef struct Parameter Parameter;
 void parseParameters(NODE* parameter,NODE* argument,Parameter** nextParam);
 int interpret(NODE* tree);
 Value interpret0(NODE* tree,int* answerBranch);
+Value interpret1(NODE* tree,int* answerBranch,int variableCreated);
 Value evalFunction(NODE* tree,int backTrack);
 Value evalExp0(NODE* tree,int backTrack);
 Value evalExp(NODE* tree);
@@ -38,7 +39,7 @@ int interpret(NODE* tree){
 	int* answerBranch = (int*)malloc(sizeof(int));
 
 	pushStack(NULL,"main");
-	Value value = interpret0(tree,answerBranch);
+	Value value = interpret1(tree,answerBranch,0);
 	free(answerBranch);
 	popStack();
 
@@ -47,6 +48,12 @@ int interpret(NODE* tree){
 
 Value interpret0(NODE* tree,int* answerBranch){
 
+	return interpret1(tree,answerBranch,0);
+}
+
+Value interpret1(NODE* tree,int* answerBranch,int variableCreated){
+
+	//printf("Type: %s\n",named(tree->type));
 	Value found;
 
 	if(tree->type == 'D' ){
@@ -62,7 +69,7 @@ Value interpret0(NODE* tree,int* answerBranch){
 			closure->functionBody = tree;
 			functionVal.valueType.closure = closure;
 			functionVal.isFunction = 1;
-			addSymbol(function->lexeme,functionVal);
+			addSymbol(function->lexeme,functionVal,1);
 			*answerBranch = 0;
 			Value ret;
 			ret.isFunction = 0;
@@ -85,7 +92,7 @@ Value interpret0(NODE* tree,int* answerBranch){
 		Value evalValue = evalExp(tree->right);
 
 		*answerBranch = 0;
-		addSymbol(((TOKEN*)tree->left->left)->lexeme,evalValue);
+		addSymbol(((TOKEN*)tree->left->left)->lexeme,evalValue,0);
 
 		return evalValue;
 
@@ -141,7 +148,7 @@ Value interpret0(NODE* tree,int* answerBranch){
 
 		if(tree->left != NULL){
 
-			Value leftAnswer = interpret0(tree->left,leftBranch);
+			Value leftAnswer = interpret1(tree->left,leftBranch,tree->type == '~');
 
 			if(*leftBranch){
 
@@ -155,7 +162,7 @@ Value interpret0(NODE* tree,int* answerBranch){
 		if(tree->right != NULL && *leftBranch != 1){
 
 			int* rightBranch = (int*)malloc(sizeof(int));
-			Value rightAnswer = interpret0(tree->right,rightBranch);
+			Value rightAnswer = interpret1(tree->right,rightBranch,tree->type == '~');
 
 			if(*rightBranch){
 
@@ -164,8 +171,6 @@ Value interpret0(NODE* tree,int* answerBranch){
 				free(rightBranch);
 			}
 		}
-
-
 
 	}
 
@@ -194,15 +199,15 @@ Value evalFunction(NODE* tree,int backTrack){
 	Parameter** paramList = (Parameter**)malloc(sizeof(Parameter*));
 	*paramList = NULL;
 	NODE* functionBody = function->functionBody;
+	//print_tree(tree);
+
 	if(functionBody->left->right->right != NULL){
 		parseParameters(functionBody->left->right->right,tree->right,paramList);
 	}
-
 	pushStack(function->env,((TOKEN*)tree->left->left->left)->lexeme);
-
 	while((*paramList) != NULL){
 
-		addSymbol((*paramList)->symbol,(*paramList)->value);
+		addSymbol((*paramList)->symbol,(*paramList)->value,1);
 		*paramList = (*paramList)->last;
 	}
 
@@ -226,10 +231,13 @@ void parseParameters(NODE* parameter,NODE* argument,Parameter** paramList){
 	}else{
 
 		TOKEN* parToken = (TOKEN*)parameter->right->left;
+		//print_tree(parameter);
 		Value value = evalExp(argument);
 		if(*paramList == NULL){
+
 			*paramList = (Parameter*)malloc(sizeof(Parameter));
 			(*paramList)->last = NULL;
+
 		}else{
 
 			(*paramList)->next = (Parameter*)malloc(sizeof(Parameter));

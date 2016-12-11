@@ -244,7 +244,7 @@ Value addNextMemLoc(char* symbol,int isVariableCreation,int* closureNo){
 		//if(value.valueType.intValue == 4){
 		//	value.valueType.intValue += currentOffset;
 		//}
-		addSymbol(symbol,value);
+		addSymbol(symbol,value,isVariableCreation);
 		return value;
 	}else{
 		//need to update values in closure
@@ -264,7 +264,7 @@ void addFunctonToFrame(char* functionName){
 	Value value;
 	value.isFunction = 1;
 	value.valueType.intValue = -4;
-	addSymbol(functionName,value);
+	addSymbol(functionName,value,1);
 }
 
 

@@ -1,12 +1,18 @@
-int m(int a){
+int pow(int number,int power){
 
-	return a;
+	int total = 1;
+	while(power > 0){
+
+		total = total * number;
+		power = power - 1;
+	}
+
+	return total;
+
 }
-
 
 int main(){
 
-	int b = 1;
-	return m(b);
+	return pow(2,5);
 }
 

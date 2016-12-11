@@ -54,8 +54,8 @@ typedef struct Closure Closure;
 
 void pushStack(struct Frame* env,char* functionName);
 void popStack();
-void addSymbol(char* symbol,Value value);
-void addSymbolByEquality(char* symbol, Value value);
+void addSymbol(char* symbol,Value value,int isVariableCreation);
+void addSymbolByEquality(char* symbol, Value value,int isVariableCreation);
 Frame* getEnvironment();
 //void addSymbol0(char* symbol,Value value,int isClosure);
 Value getValue(char* symbol);

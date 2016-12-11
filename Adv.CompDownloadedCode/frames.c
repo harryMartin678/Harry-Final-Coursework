@@ -60,15 +60,14 @@ typedef union ValueType ValueType;
 
 void getValueFromFrame(Frame* frame,char* symbol,int comparePointer,
 		struct SymbolNode** finalResult);
-void addSymbol0(char* symbol,Value value,int comparePointer);
+void addSymbol0(char* symbol,Value value,int comparePointer,int isVariableCreation);
 void printFrame(Frame* frame);
 void pushStack(Frame* env,char* functionName);
 void popStack();
 Frame* getEnvironment();
-void addSymbol(char* symbol, Value value);
-void addSymbolByEquality(char* symbol, Value value);
+void addSymbol(char* symbol, Value value,int isVariableCreation);
+void addSymbolByEquality(char* symbol, Value value,int isVariableCreation);
 int containsSymbol(char* symbol);
-void addSymbol0(char* symbol,Value value,int comparePointer);
 int isOnGlobalFrame(char* symbol);
 struct SymbolNode* getValue0(char* symbol,int comparePointer);
 void getValueFromFrame(Frame* frame,char* symbol,int comparePointer,
@@ -81,21 +80,22 @@ Value getValue(char* symbol);
 
 void printFrame(Frame* frame){
 
-	//if(frame == NULL){
+	if(frame == NULL){
 
-	//	printf("frame is null\n");
+		printf("frame is null\n");
 
-	//}else{
+	}else{
 
-	printf("Print Bindings begin \n");
-	struct SymbolNode* tranverse = frame->listHead;
-	while(tranverse != NULL){
+		printf("Print Bindings begin \n");
+		struct SymbolNode* tranverse = frame->listHead;
+		while(tranverse != NULL){
 
-		printf("\tBinding %s %d: \n",tranverse->symbol,tranverse->value.valueType);
-		tranverse = tranverse->next;
+			printf("\tBinding %s ",tranverse->symbol);
+			printf("%d:\n",tranverse->value.valueType.intValue);
+			tranverse = tranverse->next;
+		}
+		printf("Print Bindings end\n");
 	}
-	printf("Print Bindings end\n");
-	//}
 }
 
 void pushStack(Frame* env,char* functionName){
@@ -158,14 +158,14 @@ Frame* getEnvironment(){
 	return currentFrame;
 }
 
-void addSymbol(char* symbol, Value value){
+void addSymbol(char* symbol, Value value,int isVariableCreation){
 
-	addSymbol0(symbol,value, 1);
+	addSymbol0(symbol,value, 1,isVariableCreation);
 }
 
-void addSymbolByEquality(char* symbol, Value value){
+void addSymbolByEquality(char* symbol, Value value,int isVariableCreation){
 
-	addSymbol0(symbol,value,0);
+	addSymbol0(symbol,value,0,isVariableCreation);
 }
 
 int containsSymbol(char* symbol){
@@ -192,12 +192,12 @@ int containsSymbol(char* symbol){
 }
 
 
-void addSymbol0(char* symbol,Value value,int comparePointer){
+void addSymbol0(char* symbol,Value value,int comparePointer,int isVariableCreation){
 
-	printf("symbol %s\n",symbol);
+//	printf("symbol %s\n",symbol);
 	struct SymbolNode* update = getValue0(symbol,comparePointer);
 
-	if(update == NULL){
+	if(update == NULL || isVariableCreation){
 
 		if(currentFrame->listHead == NULL){
 
@@ -251,26 +251,32 @@ int isOnGlobalFrame(char* symbol){
 
 struct SymbolNode* getValue0(char* symbol,int comparePointer){
 
-	printf("get value: %s\n",symbol);
 	Frame* frame = currentFrame;
 	struct SymbolNode* finalResult = NULL;
 
+	//printFrame(frame);
+
 	getValueFromFrame(frame,symbol,comparePointer,&finalResult);
+	//printf("1: %d\n",finalResult == NULL);
 
 	Frame* thisClosureEnv = frame->closure;
 	int closureNo = 0;
 
 	while(finalResult == NULL && thisClosureEnv != NULL){
 
+		//printf("2: %s %d %d\n",symbol,finalResult == NULL,thisClosureEnv != NULL);
+		//printFrame(thisClosureEnv);
 		getValueFromFrame(thisClosureEnv,symbol,comparePointer,&finalResult);
 		thisClosureEnv = thisClosureEnv->closure;
 		closureNo++;
 	}
+	//printf("2: %d %d\n",finalResult == NULL,thisClosureEnv != NULL);
 
 	if(finalResult == NULL){
 
 		getValueFromFrame(globalFrame,symbol,comparePointer,&finalResult);
 	}
+	//printf("3: %d\n",finalResult == NULL);
 
 	//if(finalResult == NULL){
 	//	printf("symbol: %s %d\n",symbol,thisClosureEnv == NULL);
@@ -280,7 +286,7 @@ struct SymbolNode* getValue0(char* symbol,int comparePointer){
 	if(finalResult != NULL){
 		finalResult->closureNo = closureNo;
 	}else{
-		printf("couldn't find %s\n",symbol);
+		//printf("couldn't find %s\n",symbol);
 	}
 	return finalResult;
 }
@@ -291,8 +297,8 @@ void getValueFromFrame(Frame* frame,char* symbol,int comparePointer,
 	struct SymbolNode* tranverse = frame->listHead;
 	if(tranverse != NULL){
 
-		while((tranverse->next != NULL && (tranverse->symbol != symbol)
-				|| (!comparePointer && strcmp(tranverse->symbol,symbol) != 0))){
+		while((tranverse->next != NULL && ((tranverse->symbol != symbol)
+				|| (!comparePointer && strcmp(tranverse->symbol,symbol) != 0)))){
 
 			tranverse = tranverse->next;
 		}
