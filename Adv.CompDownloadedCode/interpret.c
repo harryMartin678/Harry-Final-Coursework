@@ -13,6 +13,7 @@
 #include "frames.h"
 #include <stdlib.h>
 
+//represents a parameter in a parameter list
 struct Parameter{
 
 	char* symbol;
@@ -27,20 +28,21 @@ void parseParameters(NODE* parameter,NODE* argument,Parameter** nextParam);
 int interpret(NODE* tree);
 Value interpret0(NODE* tree,int* answerBranch);
 Value interpret1(NODE* tree,int* answerBranch,int variableCreated);
-Value evalFunction(NODE* tree,int backTrack);
-Value evalExp0(NODE* tree,int backTrack);
+Value evalFunction(NODE* tree);
 Value evalExp(NODE* tree);
-Value backTrackEvalExp(NODE* tree,int backTrack);
 int evalCondition(NODE* tree);
 
+//start point
 int interpret(NODE* tree){
 
 	printf("\n\n");
 	int* answerBranch = (int*)malloc(sizeof(int));
 
+	//creates global frame where function definitions are stored
 	pushStack(NULL,"main");
 	Value value = interpret1(tree,answerBranch,0);
 	free(answerBranch);
+	//destroy global frame
 	popStack();
 
 	return value.valueType.intValue;
@@ -53,22 +55,25 @@ Value interpret0(NODE* tree,int* answerBranch){
 
 Value interpret1(NODE* tree,int* answerBranch,int variableCreated){
 
-	//printf("Type: %s\n",named(tree->type));
 	Value found;
 
+	//if the node is a function
 	if(tree->type == 'D' ){
 
 		TOKEN* function = ((TOKEN*)tree->left->right->left->left);
 
+		//if it's not the main the store the environment and the code
 		if(strcmp(function->lexeme,"main") != 0){
 
 			Value functionVal;
 			Closure* closure = (struct Closure*)malloc(sizeof(struct Closure));
+			//create closure by taking the current environment(frame)
 			closure->env = getEnvironment();
 
 			closure->functionBody = tree;
 			functionVal.valueType.closure = closure;
 			functionVal.isFunction = 1;
+			//add the function name to the frame so it can be recalled later
 			addSymbol(function->lexeme,functionVal,1);
 			*answerBranch = 0;
 			Value ret;
@@ -82,6 +87,7 @@ Value interpret1(NODE* tree,int* answerBranch,int variableCreated){
 
 	if(tree->type == RETURN){
 
+		//return the value of the return statement and set this branch to an answer branch
 		*answerBranch = 1;
 		Value value = evalExp(tree);
 		return value;
@@ -92,27 +98,45 @@ Value interpret1(NODE* tree,int* answerBranch,int variableCreated){
 		Value evalValue = evalExp(tree->right);
 
 		*answerBranch = 0;
-		addSymbol(((TOKEN*)tree->left->left)->lexeme,evalValue,0);
+		//do an assignment
+		//if a ~ was a parent of this node then this is a variable creation
+		//variable creations are pushed on to this frame regardless if there is a variable
+		//of the same name on the frame
+		addSymbol(((TOKEN*)tree->left->left)->lexeme,evalValue,variableCreated);
 
 		return evalValue;
 
 	}else if(tree->type == IF){
 
+		//create closure around the if statement
 		pushStack(getEnvironment(),"");
 		if(evalCondition(tree->left)){
 
-			Value ret = interpret0(tree->right->left,answerBranch);
+			//if code is executed
+			Value ret;
+			//if there is no else code
+			if(tree->right->type == ELSE){
+
+				ret = interpret0(tree->right->left,answerBranch);
+
+			}else{
+
+				ret = interpret0(tree->right,answerBranch);
+			}
+
 			popStack();
 			return ret;
 
 		}else if(tree->right->type == ELSE){
 
+			//execute else code
 			Value ret = interpret0(tree->right->right,answerBranch);
 			popStack();
 			return ret;
 
 		}else{
 
+			//there is no else code and the if code was no executed
 			*answerBranch = 0;
 			Value value;
 			value.isFunction = 0;
@@ -126,12 +150,22 @@ Value interpret1(NODE* tree,int* answerBranch,int variableCreated){
 
 		NODE* condition = tree->left;
 		NODE* loopCode = tree->right;
+		//place closure around while loop
 		pushStack(getEnvironment(),"");
 		while(evalCondition(condition)){
 
-			interpret0(loopCode,answerBranch);
+			//interpret the while loop's code in till the condition is false
+			Value possRet = interpret0(loopCode,answerBranch);
+
+			//if there is a return statement inside the while statement
+			if(*answerBranch == 1){
+
+				return possRet;
+			}
 		}
+
 		popStack();
+		//there was no answer branch inside the while loop
 		*answerBranch = 0;
 
 		Value zero;
@@ -140,12 +174,14 @@ Value interpret1(NODE* tree,int* answerBranch,int variableCreated){
 
 		return zero;
 
+	//if we need to keep tree walking
 	}else if(tree->type != LEAF){
 
 		*answerBranch = 0;
 		int* leftBranch = (int*)malloc(sizeof(int));
 		*leftBranch = 0;
 
+		//check if there is an answer in the left branch
 		if(tree->left != NULL){
 
 			Value leftAnswer = interpret1(tree->left,leftBranch,tree->type == '~');
@@ -156,10 +192,14 @@ Value interpret1(NODE* tree,int* answerBranch,int variableCreated){
 				*answerBranch = 1;
 				free(leftBranch);
 
+			}else{
+
+				*answerBranch = 0;
 			}
 		}
 
-		if(tree->right != NULL && *leftBranch != 1){
+		//if there wasn't an answer in the left branch then try the right branch
+		if(tree->right != NULL && (*leftBranch) == 0){
 
 			int* rightBranch = (int*)malloc(sizeof(int));
 			Value rightAnswer = interpret1(tree->right,rightBranch,tree->type == '~');
@@ -169,48 +209,59 @@ Value interpret1(NODE* tree,int* answerBranch,int variableCreated){
 				found = rightAnswer;
 				*answerBranch = 1;
 				free(rightBranch);
+
+			}else{
+
+				*answerBranch = 0;
 			}
 		}
 
 	}
 
+	//return the answer in either the right or left branch if any
 	return found;
 
 }
 
 
-
-Value evalFunction(NODE* tree,int backTrack){
+//evaluate a function call
+Value evalFunction(NODE* tree){
 
 	Value functionVal;
 	char* functionName = ((TOKEN*)tree->left->left)->lexeme;
+	//if this is a function calling the results of another functions then call that function
 	if(tree->left->type == APPLY){
 
-		functionVal = evalFunction(tree->left,backTrack);
+		functionVal = evalFunction(tree->left);
 
 	}else{
 
+		//else get the function from the frame/closure
 		functionVal = getValue(functionName);
 
 	}
 
 	Closure* function = functionVal.valueType.closure;
 
+	//create list of parameters
 	Parameter** paramList = (Parameter**)malloc(sizeof(Parameter*));
 	*paramList = NULL;
 	NODE* functionBody = function->functionBody;
-	//print_tree(tree);
 
+	//find the parameters in the tree
 	if(functionBody->left->right->right != NULL){
 		parseParameters(functionBody->left->right->right,tree->right,paramList);
 	}
+	//create a new frame for this function
 	pushStack(function->env,((TOKEN*)tree->left->left->left)->lexeme);
+	//add the arguments to that frame
 	while((*paramList) != NULL){
 
 		addSymbol((*paramList)->symbol,(*paramList)->value,1);
 		*paramList = (*paramList)->last;
 	}
 
+	//evaluate the function and return the result, as well as the answer branch
 	int* answerBranch = (int*)malloc(sizeof(int));
 	Value retValue = interpret0(functionBody->right,answerBranch);
 	popStack();
@@ -219,10 +270,10 @@ Value evalFunction(NODE* tree,int backTrack){
 }
 
 
-
-
+//collect the called function's parameters
 void parseParameters(NODE* parameter,NODE* argument,Parameter** paramList){
 
+	//keep looking for more parameters
 	if(parameter->type == ','){
 
 		parseParameters(parameter->left,argument->left,paramList);
@@ -230,6 +281,7 @@ void parseParameters(NODE* parameter,NODE* argument,Parameter** paramList){
 
 	}else{
 
+		//add the parameter to the parameters list
 		TOKEN* parToken = (TOKEN*)parameter->right->left;
 		//print_tree(parameter);
 		Value value = evalExp(argument);
@@ -240,6 +292,7 @@ void parseParameters(NODE* parameter,NODE* argument,Parameter** paramList){
 
 		}else{
 
+			//keeps a double linked list
 			(*paramList)->next = (Parameter*)malloc(sizeof(Parameter));
 			(*paramList)->next->last = *paramList;
 			*paramList = (*paramList)->next;
@@ -252,17 +305,20 @@ void parseParameters(NODE* parameter,NODE* argument,Parameter** paramList){
 	}
 }
 
-
-
-Value evalExp0(NODE* tree,int backTrack){
+//evaluates an arithmetic expression
+Value evalExp(NODE* tree){
 
 	Value zero;
 	zero.isFunction = 0;
 	zero.valueType.intValue = 0;
+	//if there is not assignment return zero
 	if(tree == NULL) return zero;
-	if(tree->type == APPLY) return evalFunction(tree,backTrack);
+	//if there is a function call, call it
+	if(tree->type == APPLY) return evalFunction(tree);
+	//if this is a leaf
 	if(tree->type == LEAF){
 
+		//either get the value of a variable
 		TOKEN* leaf = (TOKEN*)tree->left;
 		if(leaf->type == IDENTIFIER){
 
@@ -271,7 +327,7 @@ Value evalExp0(NODE* tree,int backTrack){
 
 			return value;
 
-
+		//or get the a intermediate's value
 		}else{
 
 			Value value;
@@ -282,10 +338,12 @@ Value evalExp0(NODE* tree,int backTrack){
 
 	}else{
 
-		int valueLeft = evalExp0(tree->left,backTrack).valueType.intValue;
-		int valueRight = evalExp0(tree->right,backTrack).valueType.intValue;
+		//get the values from the left and right side of the tree
+		int valueLeft = evalExp(tree->left).valueType.intValue;
+		int valueRight = evalExp(tree->right).valueType.intValue;
 		int finalValue;
 
+		//do operations such as +, -, etc...
 		if(tree->type == '+'){
 
 			finalValue = valueLeft + valueRight;
@@ -293,7 +351,6 @@ Value evalExp0(NODE* tree,int backTrack){
 		}else if(tree->type == '-'){
 
 			finalValue = valueLeft - valueRight;
-
 
 		}else if(tree->type == '*'){
 
@@ -325,15 +382,13 @@ Value evalExp0(NODE* tree,int backTrack){
 
 }
 
-Value evalExp(NODE* tree){
-
-	return evalExp0(tree,0);
-}
-
+//evalulate a condition
 int evalCondition(NODE* tree){
 
-	if(tree->type == APPLY) return evalFunction(tree,0).valueType.intValue;
+	//if there is function call then call it
+	if(tree->type == APPLY) return evalFunction(tree).valueType.intValue;
 
+	//evaluate the expression on both the left and right and do the operator on them
 	if(tree->type == EQ_OP){
 
 		return evalExp(tree->left).valueType.intValue == evalExp(tree->right).valueType.intValue;
@@ -357,6 +412,7 @@ int evalCondition(NODE* tree){
 	}else if(tree->type == '>'){
 
 		return evalExp(tree->left).valueType.intValue > evalExp(tree->right).valueType.intValue;
+
 	}
 
 	return ((TOKEN*)tree->left)->value;

@@ -194,7 +194,7 @@ int containsSymbol(char* symbol){
 
 void addSymbol0(char* symbol,Value value,int comparePointer,int isVariableCreation){
 
-//	printf("symbol %s\n",symbol);
+	//printf("symbol %s\n",symbol);
 	struct SymbolNode* update = getValue0(symbol,comparePointer);
 
 	if(update == NULL || isVariableCreation){
@@ -279,7 +279,7 @@ struct SymbolNode* getValue0(char* symbol,int comparePointer){
 	//printf("3: %d\n",finalResult == NULL);
 
 	//if(finalResult == NULL){
-	//	printf("symbol: %s %d\n",symbol,thisClosureEnv == NULL);
+	//	printf("symbol: %s %d\n",symbol,finalResult->value.valueType.intValue);
 	//}
 
 	//printFrame(thisClosureEnv);

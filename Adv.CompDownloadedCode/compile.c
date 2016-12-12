@@ -560,15 +560,13 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 	case WHILE:
 
-		printf("DO \n");
-		char* doLabel;
-		int doLabelCount = getLabelCount();
-		asprintf(&doLabel,"DO_%d:",doLabelCount);
-		createStatement0(doLabel,0,'O');
-		resetTemp();
-		compile0(tree->right,tabs+1,variableCreated);
+		;
 		struct TypeValue whileCondition = compile0(tree->left,tabs+1,variableCreated);
 
+		char* endWhileLabel;
+		int whileLabelCount = getLabelCount();
+		asprintf(&endWhileLabel,"While_%d",whileLabelCount);
+		createStatement0(endWhileLabel,0,'B');
 		if(whileCondition.type == 0){
 
 			printf("WHILE %d:\n",whileCondition.value);
@@ -582,11 +580,18 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 			printf("WHILE %s:\n",whileCondition.lexeme);
 		}
 
-		char* endDo;
-		asprintf(&endDo,"endDO_%d",doLabelCount);
-		createStatement0(endDo,0,'J');
-		createInstruction0(doLabel,whileCondition.value,whileCondition.type == 1,1,0,'C',
-						0);
+		char* whileLabel;
+		asprintf(&whileLabel,"endWhile_%d",whileLabelCount);
+		createInstruction0(whileLabel,whileCondition.value,whileCondition.type == 1,0,0,'W',0);
+
+		resetTemp();
+		compile0(tree->right,tabs+1,variableCreated);
+
+		char* jumpWhileLabel;
+		asprintf(&jumpWhileLabel,"j While_%d",whileLabelCount);
+		createStatement0(jumpWhileLabel,0,'O');
+
+		createStatement0(whileLabel,0,'B');
 
 		break;
 	case LEAF:
@@ -1089,6 +1094,14 @@ void convertToAssembly(TacLine* line,AssemblyContext* context){
 		hasPrinted = 1;
 		break;
 
+	case 'W':
+
+		printWhileStatement(line);
+		printNewBlock(line->variable);
+		hasPrinted = 1;
+
+		break;
+
 	case 'P':
 
 		if(line->paramType == 3){
@@ -1202,6 +1215,14 @@ void printLw(char* variable, char* variable2,int loadAddress){
 void printIfStatement(TacLine* line){
 
 	//pushStack(getEnvironment(),"");
+	printf("beq ");
+	printAssemOperand(&line->operand1,line->isVar1,0);
+	printAssemOperand(&line->operand2,line->isVar2,0);
+	printf("%s\n",line->variable);
+}
+
+void printWhileStatement(TacLine* line){
+
 	printf("beq ");
 	printAssemOperand(&line->operand1,line->isVar1,0);
 	printAssemOperand(&line->operand2,line->isVar2,0);
