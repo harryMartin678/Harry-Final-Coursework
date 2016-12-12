@@ -92,7 +92,7 @@ void calculateFunctionInfo(struct TacLine* lines){
 
 			current->Size += 4;
 
-		}else if(next->operator == 'C'){
+		}else if(next->operator == 'C' || next->operator == 'W'){
 
 			current->Size += 4;
 

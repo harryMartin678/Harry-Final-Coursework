@@ -251,6 +251,7 @@ int isOnGlobalFrame(char* symbol){
 
 struct SymbolNode* getValue0(char* symbol,int comparePointer){
 
+	//printf("get Value %s\n",symbol);
 	Frame* frame = currentFrame;
 	struct SymbolNode* finalResult = NULL;
 
