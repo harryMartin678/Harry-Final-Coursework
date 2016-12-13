@@ -63,3 +63,4 @@ void changeAllInFrame(int amount);
 Value getValueByEquality(char* symbol,int* closureNo);
 int containsSymbol(char* symbol);
 Value getLastValue();
+Value isFunctionPointer(char* symbol);

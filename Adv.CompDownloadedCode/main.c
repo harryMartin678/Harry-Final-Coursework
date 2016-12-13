@@ -112,13 +112,44 @@ extern void init_symbtable(void);
 int main(int argc, char** argv)
 {
     NODE* tree;
-    if (argc>1 && strcmp(argv[1],"-d")==0) yydebug = 1;
+    if(argc < 2){
+
+    	printf("Too few arguments");
+    }
+    char* option = argv[1];
+    if (argc>2 && strcmp(argv[2],"-d")==0) yydebug = 1;
     init_symbtable();
-    printf("--C COMPILER\n");
+
     yyparse();
     tree = ans;
 
-    printf("Answer: %d\n",interpret(tree,0));
+    printf("\n\n");
+
+    if(strcmp(option,"INT") == 0){
+
+    	printf("--C INTEPRETER\n");
+    	printf("Answer: %d\n",interpret(tree,0));
+
+    }else if(strcmp(option,"CMP") == 0){
+
+    	printf("--C COMPILER\n");
+    	compileToAssembly(tree);
+
+    }else if(strcmp(option, "TAC") == 0){
+
+    	printf("--C TAC ONLY COMPILER\n");
+    	compile(tree);
+
+    }else if(strcmp(option,"TREE") == 0){
+
+    	printf("PRINT TREE\n");
+    	print_tree(tree);
+
+    }else{
+
+    	printf("Invalid option.");
+    }
+
     //testFunc();
 
     //print_tree(tree);

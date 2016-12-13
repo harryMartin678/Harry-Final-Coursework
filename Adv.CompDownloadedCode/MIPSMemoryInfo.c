@@ -88,9 +88,9 @@ void calculateFunctionInfo(struct TacLine* lines){
 			current->Size += 4;
 			currentFuncParams ++;
 
-		}else if(next->isRegisterFunctionCall){
+		}else if(next->operator == 'F'){
 
-			current->Size += 4;
+			current->Size += 8;
 
 		}else if(next->operator == 'C' || next->operator == 'W'){
 

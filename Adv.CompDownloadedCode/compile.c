@@ -5,25 +5,15 @@
  *      Author: harry
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
-#include <errno.h>
-//#include "nodes.h"
-//#include "C.tab.h"
 #include "TacLineQueue.h"
 #include "MIPSMemoryInfo.h"
 
-//TacLine{
-
-	//int variable;
-	//int operand1;
-	//int isVar1;
-	//int operand2;
-	//int isVar2;
-//	char operator;
-//};
 
 typedef struct TacLine TacLine;
 
@@ -33,48 +23,39 @@ int label_count = 0;
 char* MAINSTRING = "main";
 char* IFSTRING = "IF";
 
-/*void test_func(){
+void printVarAssignment(char* variable, char* variable2,int op);
+void createVarAssignment(char* variable, char* variable2,int op,int isVar1Temp,int isVar2Temp,
+		int isVariableCreation);
+struct TypeValue IfVarWrap(struct TypeValue var,int isVariableCreation);
+void printParam(struct TypeValue value);
+void createParam(struct TypeValue value);
+void printPopArg(struct TypeValue value);
+void createPopArg(struct TypeValue value);
+struct TypeValue placeInterInTemp(struct TypeValue value);
+void createFunctionCall(char* function,int temp,int applyOnTemp);
+void createStatement0(char* statement,int isFunction,char operator);
+void replaceIfReserved(char** functionName);
+struct TypeValue compile0(NODE* tree,int variableCreated);
+void createIfCode(NODE* tree, int variableCreated,int fromElse);
+void createStatement(char* statement);
+void createSimpleInstruct(char* variable,int operand1,int isVar1,int op);
+void createInstruction(char* variable,int operand1,int isVar1, int operand2,int isVar2, int operator);
+void createInstruction0(char* variable,int operand1,int isVar1, int operand2,int isVar2, int operator,
+		int thereIsElse);
+void printSimpleAssignment(char* var, int value, int isVar);
+void printTacLine(char* var,int op, struct TypeValue left, struct TypeValue right);
+void printOperand(struct TypeValue operand,int isRight);
+int genTemp();
+void resetTemp();
+int genLabelCount();
+int getLabelCount();
+void releaseLabelCount();
+int reuseTemp();
+int strNumSize(int value,int strLength);
+void intToString(char* start,int value,char* end,char** combine);
+int numDigits(int number);
+void compile(NODE* tree);
 
-	char* src = "start\0";
-	char* dest = (char*)malloc(sizeof(char)*strlen(src));
-	//copy(src,dest);
-	printf("%s \n",dest);
-
-}*/
-
-
-void printEquations(NODE* tree){
-
-	//printf("ENTER EQUATIONS %d\n",tree == NULL);
-	if(tree == NULL) return;
-
-	int recurse = 1;
-
-	if(tree->type == LEAF){
-
-		printf("Value: %d\n",((TOKEN*)tree->left)->value);
-		recurse = 0;
-
-	}else if(tree->type == '+'){
-
-		printf("Operator: %s\n",named(tree->type));
-
-	}
-
-	if(recurse){
-
-		printEquations(tree->left);
-		printEquations(tree->right);
-	}
-}
-
-void test_func(){
-
-	int a = 10;
-	char* combine;
-	intToString("start",a,"end",&combine);
-	printf("Combine: %s\n",combine);
-}
 
 struct TypeValue{
 
@@ -145,7 +126,6 @@ void printParam(struct TypeValue value){
 
 void createParam(struct TypeValue value){
 
-	printf("print param\n");
 	TacLine* tacline = (TacLine*)malloc(sizeof(TacLine));
 	tacline->operator = 'P';
 	tacline->isNext = 0;
@@ -276,7 +256,7 @@ void replaceIfReserved(char** functionName){
 }
 
 
-struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
+struct TypeValue compile0(NODE* tree,int variableCreated){
 
 	//TacLine* tacLine = (TacLine*)malloc(sizeof(TacLine));
 	//printf("Type: %s %d \n",named(tree->type),variableCreated);
@@ -294,8 +274,8 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		replaceIfReserved(&name->lexeme);
 		printf("%s: \n",name->lexeme);
 		createStatement(name->lexeme);
-		compile0(tree->left,tabs,0);
-		compile0(tree->right,tabs+1,0);
+		compile0(tree->left,0);
+		compile0(tree->right,0);
 		char* start = ".end ";
 		char* endState = (char*)malloc((strlen(start) + strlen(name->lexeme) + 1) * sizeof(char));
 		//printf("malloc s: create endstate %d\n",(strlen(".end ") + strlen(name->lexeme)) * sizeof(char));
@@ -309,15 +289,15 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 	case 'F':
 
-		compile0(tree->left,tabs,variableCreated);
+		compile0(tree->left,variableCreated);
 		if(tree->right != NULL){
 			if(tree->right->type == ','){
 
-				compile0(tree->right,tabs,variableCreated);
+				compile0(tree->right,variableCreated);
 
 			}else{
 
-				struct TypeValue arg = compile0(tree->right->right,tabs,variableCreated);
+				struct TypeValue arg = compile0(tree->right->right,variableCreated);
 				printPopArg(arg);
 				createPopArg(arg);
 			}
@@ -330,13 +310,13 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		if(tree->left->type != ','){
 			if(tree->left->type == '~'){
 
-				struct TypeValue valueL = compile0(tree->left->right,tabs,variableCreated);
+				struct TypeValue valueL = compile0(tree->left->right,variableCreated);
 				printPopArg(valueL);
 				createPopArg(valueL);
 
 			}else{
 
-				struct TypeValue valueL = compile0(tree->left,tabs,variableCreated);
+				struct TypeValue valueL = compile0(tree->left,variableCreated);
 
 				valueL = placeInterInTemp(valueL);
 				printParam(valueL);
@@ -344,26 +324,26 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 			}
 		}else{
 
-			compile0(tree->left,tabs,variableCreated);
+			compile0(tree->left,variableCreated);
 		}
 
 		if(tree->right->type != ','){
 			if(tree->right->type == '~'){
 
-				struct TypeValue valueR = compile0(tree->right->right,tabs,variableCreated);
+				struct TypeValue valueR = compile0(tree->right->right,variableCreated);
 				printPopArg(valueR);
 				createPopArg(valueR);
 
 			}else{
 
-				struct TypeValue valueR = compile0(tree->right,tabs,variableCreated);
+				struct TypeValue valueR = compile0(tree->right,variableCreated);
 				valueR = placeInterInTemp(valueR);
 				printParam(valueR);
 				createParam(valueR);
 			}
 		}else{
 
-			compile0(tree->right,tabs,variableCreated);
+			compile0(tree->right,variableCreated);
 		}
 		break;
 
@@ -377,7 +357,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		int applyOnFunction = 0;
 		if(tree->left->type == APPLY){
 
-			onApply = compile0(tree->left,tabs,variableCreated);
+			onApply = compile0(tree->left,variableCreated);
 			applyOnFunction = 1;
 		}
 
@@ -388,11 +368,11 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		if(tree->right != NULL){
 			if(tree->right->type == ','){
 
-				compile0(tree->right,tabs,variableCreated);
+				compile0(tree->right,variableCreated);
 
 			}else{
 
-				struct TypeValue param = compile0(tree->right,tabs,variableCreated);
+				struct TypeValue param = compile0(tree->right,variableCreated);
 
 				param = placeInterInTemp(param);
 				printParam(param);
@@ -425,7 +405,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 	case RETURN:
 		{
 			//int value = ((TOKEN*)tree->left)->value;
-			struct TypeValue value = compile0(tree->left,tabs,variableCreated);
+			struct TypeValue value = compile0(tree->left,variableCreated);
 
 			//char[] line = new char[6+numDigits(value)];
 			char* start = "Return ";
@@ -462,11 +442,6 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 			addToQueue(line);
 			line = NULL;
 
-			//char* combine = (char*)malloc(strNumSize(value,strlen(start)));
-			//createNumEndLine(start,value,combine);
-			//tacLine->line = combine;
-			//tacLine->leftLine = NULL;
-			//tacLine->rightLine = NULL;
 		}
 
 		break;
@@ -474,7 +449,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 	case '=':
 
 		;
-		struct TypeValue a = compile0(tree->right,tabs,variableCreated);
+		struct TypeValue a = compile0(tree->right,variableCreated);
 
 		int t = genTemp();
 		char* temp;
@@ -503,8 +478,8 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		//printEquations(tree);
 		//printTabs(tabs);
 		;
-		struct TypeValue l = compile0(tree->left,tabs,variableCreated);
-		struct TypeValue r = compile0(tree->right,tabs,variableCreated);
+		struct TypeValue l = compile0(tree->left,variableCreated);
+		struct TypeValue r = compile0(tree->right,variableCreated);
 		int d = genTemp();
 		char* var;
 		intToString("$t",d,"",&var);
@@ -543,7 +518,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		;
 		//printTabs(tabs);
 
-		struct TypeValue condition = compile0(tree->left,tabs+1,variableCreated);
+		struct TypeValue condition = compile0(tree->left,variableCreated);
 		if(condition.type == 0){
 
 			printf("IF %d:\n",condition.value);
@@ -576,13 +551,14 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 		}
 
-		compile0(tree->right,tabs+1,variableCreated);
+		compile0(tree->right,variableCreated);
 
 
 		if(tree->right->type != ELSE){
 			char* endIf;
 			asprintf(&endIf,"end_%d",getLabelCount());
 			createStatement0(endIf,0,'J');
+			printf("END THEN\n");
 		}
 
 		//createStatement0(ifLabel,0);
@@ -594,8 +570,10 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 		resetTemp();
 		printf("ELSE: \n");
-		compile0(tree->right,tabs+1,variableCreated);
+		compile0(tree->right,variableCreated);
+		printf("END ELSE\n");
 		createIfCode(tree,variableCreated,1);
+		printf("END THEN\n");
 
 		break;
 
@@ -606,7 +584,7 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 		int whileLabelCount = genLabelCount();
 		asprintf(&endWhileLabel,"While_%d",whileLabelCount);
 		createStatement0(endWhileLabel,0,'B');
-		struct TypeValue whileCondition = compile0(tree->left,tabs+1,variableCreated);
+		struct TypeValue whileCondition = compile0(tree->left,variableCreated);
 
 		if(whileCondition.type == 0){
 
@@ -628,7 +606,6 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 			int temp = genTemp();
 			char* inter;
 			intToString("$t",temp,"",&inter);
-			//printf("li $t%d %d;",temp,whileCondition.value);
 			printSimpleAssignment(inter,whileCondition.value,0);
 			createSimpleInstruct(inter,whileCondition.value,0,'=');
 			createInstruction0(whileLabel,temp,1,0,0,'W',0);
@@ -639,13 +616,14 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 
 		resetTemp();
-		compile0(tree->right,tabs+1,variableCreated);
+		compile0(tree->right,variableCreated);
 
 		char* jumpWhileLabel;
 		asprintf(&jumpWhileLabel,"j While_%d",whileLabelCount);
 		createStatement0(jumpWhileLabel,0,'M');
 
 		createStatement0(whileLabel,0,'B');
+		printf("END WHILE\n");
 		releaseLabelCount();
 
 		break;
@@ -669,16 +647,16 @@ struct TypeValue compile0(NODE* tree,int tabs,int variableCreated){
 
 	case '~':
 
-		compile0(tree->left,tabs,1);
+		compile0(tree->left,1);
 		if(tree->right != NULL){
-			compile0(tree->right,tabs,1);
+			compile0(tree->right,1);
 		}
 		break;
 	default:
 
-		compile0(tree->left,tabs,variableCreated);
+		compile0(tree->left,variableCreated);
 		if(tree->right != NULL){
-			compile0(tree->right,tabs,variableCreated);
+			compile0(tree->right,variableCreated);
 		}
 	}
 
@@ -701,7 +679,7 @@ void createIfCode(NODE* tree, int variableCreated,int fromElse){
 	//printf("malloc: s createIfCode %d\n",sizeof(char)*(strlen(endIf) + 4));
 	strcpy(jumpToEnd,"j ");
 	strcat(jumpToEnd,endIf);
-	char* jumpToEndOp = 'O';
+	char jumpToEndOp = 'O';
 	if(fromElse){
 		jumpToEndOp = 'M';
 	}
@@ -714,11 +692,11 @@ void createIfCode(NODE* tree, int variableCreated,int fromElse){
 	//createStatement0(endIf,0,'J');
 	if(!fromElse){
 
-		compile0(tree->left->left,0,variableCreated);
+		compile0(tree->left->left,variableCreated);
 
 	}else{
 
-		compile0(tree->left,0,variableCreated);
+		compile0(tree->left,variableCreated);
 		createStatement0(endIf,0,'J');
 	}
 
@@ -852,11 +830,6 @@ int genTemp(){
 	return ++temp_count;
 }
 
-void setTemp(int temp){
-
-	temp_count = temp;
-}
-
 int genLabelCount(){
 
 	return ++label_count;
@@ -910,6 +883,12 @@ int numDigits(int number)
     return digits;
 }
 
+
+void compile(NODE* tree){
+
+	compile0(tree,0);
+}
+
 struct FunctionNameNode{
 
 	char* functionName;
@@ -929,6 +908,25 @@ struct AssemblyContext{
 };
 
 typedef struct AssemblyContext AssemblyContext;
+
+void pushFunctionName(char* functionName,AssemblyContext* context);
+void popFunctionName(AssemblyContext* context);
+char* getBlockNo(char* totalName);
+void printNewBlock(char* blockName);
+void printEndBlock(char* blockName);
+void convertToAssembly(TacLine* line,AssemblyContext* context);
+void printFindClosure(int closureNo);
+void printLw(char* variable, char* variable2,int loadAddress);
+void printConditionStatement(TacLine* line);
+void printReturnStatementInstruct(void* retValue, int isVar, int isTemp,AssemblyContext* context);
+void printPopArgInstruct(char* variable,AssemblyContext* context);
+void printFunctionCall(char* function,int temp,AssemblyContext* context,int callingTemp);
+char* getFunctionNameFromEndTag(char* variable);
+void printParamInstruct(void* param,int type,AssemblyContext* context);
+void printAssemInstruct(char* instruct,TacLine* line,AssemblyContext* context);
+void printAssemOperand(void* operand,int isVar,int isStr);
+void createParamData(int numOfParams);
+void compileToAssembly(NODE* tree);
 
 
 void pushFunctionName(char* functionName,AssemblyContext* context){
@@ -1274,7 +1272,7 @@ void printLw(char* variable, char* variable2,int loadAddress){
 
 		}else{
 
-			printf("lw %s, ($v0)",variable);
+			printf("la %s, ($v0)",variable);
 		}
 		//la when returning but lw with passing
 
@@ -1340,6 +1338,22 @@ void printPopArgInstruct(char* variable,AssemblyContext* context){
 	addNextMemLoc(variable,1,&closureNo);
 }
 
+
+void printCallFunctionPointer(char* function){
+
+	int closureNo;
+	Value offset = addNextMemLoc("$s2",1,&closureNo);
+	printf("sw $s2,%d($fp)\n",offset.valueType.intValue);
+	printf("move $s2, $fp\n");
+	printf("lw $fp, 4(%s)\n",function);
+	printf("lw $t0, 0(%s)\n",function);
+	printf("jalr $t0\n");
+	printf("move $fp, $s2\n");
+	printf("lw $s2, %d($fp)\n",offset.valueType.intValue);
+
+
+}
+
 void printFunctionCall(char* function,int temp,AssemblyContext* context,int callingTemp){
 
 	char* parent = getParent(function);
@@ -1351,11 +1365,7 @@ void printFunctionCall(char* function,int temp,AssemblyContext* context,int call
 
 	if(callingTemp){
 
-		printf("move $s2, $fp\n");
-		printf("lw $fp, 4(%s)\n",function);
-		printf("lw $t0, 0(%s)\n",function);
-		printf("jalr $t0\n");
-		printf("move $fp, $s2\n");
+		printCallFunctionPointer(function);
 
 	}else if(isGlobalFunction(function)){
 
@@ -1366,14 +1376,32 @@ void printFunctionCall(char* function,int temp,AssemblyContext* context,int call
 		int closureNo;
 		Value offset = getValueByEquality(function,&closureNo);
 		//calling child function from parent function
-		if(offset.valueType.intValue < 0){
+		if(offset.isFunction == 1){
+			if(offset.valueType.intValue < 0){
 
-			printf("jal %s\n",function);
+				printf("jal %s\n",function);
+			}else{
+
+				printFindClosure(closureNo);
+				printf("lw $v1, %d($v1)\n",offset.valueType.intValue);
+				printf("jalr $v1\n");
+			}
 		}else{
 
-			printFindClosure(closureNo);
-			printf("lw $v1, %d($v1)\n",offset.valueType.intValue);
-			printf("jalr $v1\n");
+			if(closureNo > 0){
+				printFindClosure(closureNo);
+				printf("lw $v1, %d($v1)\n",offset.valueType.intValue);
+			}else{
+
+				printf("lw $v1, %d($fp)\n",offset.valueType.intValue);
+			}
+			/*printf("move $s2, $fp\n");
+			printf("lw $fp, 4($v1)\n");
+			printf("lw $t0, 0($v1)\n");
+			printf("jalr $t0\n");
+			printf("move $fp, $s2\n");*/
+
+			printCallFunctionPointer("$v1");
 		}
 
 
@@ -1560,7 +1588,7 @@ void printAssemInstruct(char* instruct,TacLine* line,AssemblyContext* context){
 }
 
 
-struct SubExpression{
+/*struct SubExpression{
 
 	char* assigned;
 	char* operand1;
@@ -1681,7 +1709,7 @@ void optimizeBasicBlock(TacLine* first){
 
 	}while(noOfChanges > 0);
 }
-
+*/
 
 void printAssemOperand(void* operand,int isVar,int isStr){
 
@@ -1700,11 +1728,6 @@ void printAssemOperand(void* operand,int isVar,int isStr){
 }
 
 
-void compile(NODE* tree){
-
-	//TacLine* firstLine = (TacLine*)malloc(sizeof(TacLine));
-	compile0(tree,0,0);
-}
 
 void createParamData(int numOfParams){
 
@@ -1719,7 +1742,7 @@ void createParamData(int numOfParams){
 
 void compileToAssembly(NODE* tree){
 
-	compile0(tree,0,0);
+	compile0(tree,0);
 
 	printf("\n\n\n");
 	calculateFunctionInfo(getElement(0));
@@ -1740,9 +1763,6 @@ void compileToAssembly(NODE* tree){
 		convertToAssembly(getElement(i),context);
 	}
 
-	//printf("li $v0,10\n");
-	//printf("syscall\n");
-	//printf(".end main\n");
 
 }
 

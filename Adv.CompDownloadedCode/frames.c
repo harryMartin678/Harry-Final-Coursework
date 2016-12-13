@@ -236,7 +236,7 @@ int isOnGlobalFrame(char* symbol){
 
 	while(next != NULL){
 
-		if(strcmp(next->symbol,symbol) == 0){
+		if(strcmp(next->symbol,symbol) == 0 && next->value.isFunction == 1){
 
 			return 1;
 		}
