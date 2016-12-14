@@ -27,6 +27,7 @@ struct TacLine{
 	int isRegisterFunctionCall;
 	int isVariableCreation;
 	int thereIsElse;
+	int deleteInOptimization;
 	struct TacLine* next;
 };
 

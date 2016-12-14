@@ -133,12 +133,17 @@ int main(int argc, char** argv)
     }else if(strcmp(option,"CMP") == 0){
 
     	printf("--C COMPILER\n");
-    	compileToAssembly(tree);
+    	compileToAssembly(tree,0);
 
     }else if(strcmp(option, "TAC") == 0){
 
     	printf("--C TAC ONLY COMPILER\n");
     	compile(tree);
+
+    }else if(strcmp(option,"CMPOPT") == 0){
+
+    	printf("--C OPTIMIZE COMPILER\n");
+    	compileToAssembly(tree,1);
 
     }else if(strcmp(option,"TREE") == 0){
 

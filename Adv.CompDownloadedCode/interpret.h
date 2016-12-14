@@ -24,8 +24,6 @@ int interpret(NODE* tree,int level);
 
 
 void compile(NODE* tree);
-void compileToAssembly(NODE* tree);
-void testfunc();
-void test_func();
+void compileToAssembly(NODE* tree,int optimize);
 
 #endif /* INTERPRET_H_ */

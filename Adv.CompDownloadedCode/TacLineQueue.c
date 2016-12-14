@@ -28,6 +28,7 @@ struct TacLine{
 	int isRegisterFunctionCall;
 	int isVariableCreation;
 	int thereIsElse;
+	int deleteInOptimization;
 	struct TacLine* next;
 };
 
@@ -37,6 +38,7 @@ int size = 0;
 
 void addToQueue(struct TacLine* next){
 
+	next->deleteInOptimization = 0;
 	if(head == NULL){
 
 		head = next;

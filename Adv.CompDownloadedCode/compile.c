@@ -17,7 +17,9 @@
 
 typedef struct TacLine TacLine;
 
+//keeps track of what temperories are avaliable
 int temp_count = 0;
+//keeps track of what if statement or while statement the compiler is compiling
 int label_count = 0;
 
 char* MAINSTRING = "main";
@@ -64,12 +66,15 @@ struct TypeValue{
 	int type;
 };
 
+//prints a simple variable assignment
 void printVarAssignment(char* variable, char* variable2,int op){
 
 	printf("%s %c %s;\n",variable,op,variable2);
 
 }
 
+//creates a TAC line structure for a simple variable assignment
+//is variable creation is 1 when this variable is a creation and not an update
 void createVarAssignment(char* variable, char* variable2,int op,int isVar1Temp,int isVar2Temp,
 		int isVariableCreation){
 
@@ -91,6 +96,7 @@ void createVarAssignment(char* variable, char* variable2,int op,int isVar1Temp,i
 	addToQueue(tacline);
 }
 
+//places a variable inside a temporary
 struct TypeValue IfVarWrap(struct TypeValue var,int isVariableCreation){
 
 	if(var.type == 3){
@@ -112,6 +118,7 @@ struct TypeValue IfVarWrap(struct TypeValue var,int isVariableCreation){
 	}
 }
 
+//prints a parameter that is being pushed
 void printParam(struct TypeValue value){
 
 	if(value.type == 1){
@@ -124,6 +131,7 @@ void printParam(struct TypeValue value){
 	}
 }
 
+//creates a TAC lien that represents a parameter being pushed
 void createParam(struct TypeValue value){
 
 	TacLine* tacline = (TacLine*)malloc(sizeof(TacLine));
@@ -132,14 +140,17 @@ void createParam(struct TypeValue value){
 	tacline->isSimple = 0;
 	tacline->isStatement = 0;
 	tacline->isVariableEq = 0;
+	tacline->variable2 = NULL;
 	tacline->isRegisterFunctionCall = 0;
 	tacline->paramType = value.type;
 
+	//if a integer is being pushed
 	if(value.type == 1){
 
 		tacline->operand1 = value.value;
 		tacline->isVar1 = 1;
 
+	//if a variable is being pushed
 	}else if(value.type == 3){
 
 		tacline->variable = value.lexeme;
@@ -148,27 +159,31 @@ void createParam(struct TypeValue value){
 	addToQueue(tacline);
 }
 
+//prints an argument being popped when a function has been called
 void printPopArg(struct TypeValue value){
 
 	printf("PopArg %s;\n",value.lexeme);
 
 }
 
+//creates a Tac line representing a argument being placed in the function's frame
 void createPopArg(struct TypeValue value){
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
-	//printf("malloc: %d\n",sizeof(TacLine));
 	line->operator = 'A';
 	line->variable = value.lexeme;
 	line->paramType = value.type;
+	line->variable2 = NULL;
 	line->isRegisterFunctionCall = 0;
 
 	addToQueue(line);
 }
 
+//this function is used to get around the limitations in MIPS where the first operand of a operation
+//has to be a register
 struct TypeValue placeInterInTemp(struct TypeValue value){
 
-	//printf("Parameter lexeme: %s Type: %d\n",value.lexeme,value.type);
+	//if the value is an integer then place that integer into a temporary
 	if(value.type == 0){
 
 		int temp = reuseTemp();
@@ -182,6 +197,7 @@ struct TypeValue placeInterInTemp(struct TypeValue value){
 		newValue.value = temp;
 		return newValue;
 
+	//if the value is variable place it in a temporary
 	}else if(value.type == 3){
 
 		int temp = reuseTemp();
@@ -200,11 +216,14 @@ struct TypeValue placeInterInTemp(struct TypeValue value){
 	}
 }
 
+//this function creates a tac line representing a function call
+//1st arg: function name 2nd arg: the temporary to place the returned value
+//3rd arg: whether this function call is on a function pointer
 void createFunctionCall(char* function,int temp,int applyOnTemp){
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
-	//printf("malloc: %d\n",sizeof(TacLine));
 	line->variable = function;
+	line->variable2 = NULL;
 	line->operator = 'F';
 	line->isStatement = 0;
 	line->isNext = 0;
@@ -217,13 +236,14 @@ void createFunctionCall(char* function,int temp,int applyOnTemp){
 	addToQueue(line);
 }
 
+//creates a generic function
+//1st: the name of the statement 2nd arg: whether this is a function declaration
+//3rd: the statement's type
 void createStatement0(char* statement,int isFunction,char operator){
 
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
-	//perror("malloc failed");
-	//printf("malloc: %d\n",sizeof(TacLine));
-
 	line->variable = statement;
+	line->variable2 = NULL;
 	line->isStatement = 1 + isFunction;
 	line->isVariableEq = 0;
 	line->isNext = 0;
@@ -234,6 +254,7 @@ void createStatement0(char* statement,int isFunction,char operator){
 	addToQueue(line);
 }
 
+//adds a _ to the end of function names that have the same name as MIPS reserved words
 void replaceIfReserved(char** functionName){
 
 	const char *a[4];
@@ -245,6 +266,7 @@ void replaceIfReserved(char** functionName){
 	int i;
 	for(i = 0; i < 4; i++){
 
+		//if the function name is the same as the reserved work then add the letter _
 		if(strcmp(*functionName,a[i]) == 0){
 
 			char* oldWord = *functionName;
@@ -255,38 +277,40 @@ void replaceIfReserved(char** functionName){
 	}
 }
 
-
+//inital compilation phase
+//1st arg: the next node to compile 2nd: whether the next assignment is a creation or update
 struct TypeValue compile0(NODE* tree,int variableCreated){
 
-	//TacLine* tacLine = (TacLine*)malloc(sizeof(TacLine));
-	//printf("Type: %s %d \n",named(tree->type),variableCreated);
+	//the node type determines how a node is compiled
 	switch(tree->type){
 
+	//new function declaration
 	case 'D':
 
-		//printf("%s \n",((TOKEN*)tree->left->right->left)->lexeme);
-		//tacLine->line = ((TOKEN*)tree->left->right->left)->lexeme;
-		//tacLine->line = "main:";
+		//can start using temporaries from 0 again as this is a new function
 		resetTemp();
 		TOKEN* name = (TOKEN*)tree->left->right->left->left;
-		//TOKEN* type = (TOKEN*)tree->left->left->left;
-		//name->next = type;
+		//replace the function name if it's a reserved work in MIPS
 		replaceIfReserved(&name->lexeme);
 		printf("%s: \n",name->lexeme);
+		//create the TACLINE
 		createStatement(name->lexeme);
+		//compile the function
 		compile0(tree->left,0);
 		compile0(tree->right,0);
+		//end the function with .end function name
 		char* start = ".end ";
 		char* endState = (char*)malloc((strlen(start) + strlen(name->lexeme) + 1) * sizeof(char));
-		//printf("malloc s: create endstate %d\n",(strlen(".end ") + strlen(name->lexeme)) * sizeof(char));
-		//printf("one: %d\n",strlen(endState));
 		strcpy(endState,start);
-		//printf("two: %d\n",strlen(endState));
+
 		strcat(endState,name->lexeme);
 		printf("%s\n",endState);
+		//create end function statement
 		createStatement0(endState,3,'E');
 		break;
 
+	//start compiling the arguments by printing the only argument or recursiving on the , node
+	//to find the other arguments
 	case 'F':
 
 		compile0(tree->left,variableCreated);
@@ -304,6 +328,7 @@ struct TypeValue compile0(NODE* tree,int variableCreated){
 		}
 
 		break;
+	//comma indicates either multiple arguments or multiple parameters
 	case ',':
 
 		;
@@ -414,6 +439,7 @@ struct TypeValue compile0(NODE* tree,int variableCreated){
 			//printf("malloc: %d\n",sizeof(TacLine));
 			line->operator = 'R';
 			line->isRegisterFunctionCall = 0;
+			line->variable2 = NULL;
 
 			//printf("RET TYPE: %d ",value.type);
 			//printTabs(tabs);
@@ -720,6 +746,7 @@ void createSimpleInstruct(char* variable,int operand1,int isVar1,int op){
 	line->isRegisterFunctionCall = 0;
 	line->operator = op;
 	line->next = NULL;
+	line->variable2 = NULL;
 	line->isNext = 0;
 
 	addToQueue(line);
@@ -736,6 +763,7 @@ void createInstruction0(char* variable,int operand1,int isVar1, int operand2,int
 	TacLine* line = (TacLine*)malloc(sizeof(TacLine));
 	//printf("malloc: %d\n",sizeof(TacLine));
 	line->variable = variable;
+	line->variable2 = NULL;
 	line->operand1 = operand1;
 	line->isVar1 = isVar1;
 	line->operand2 = operand2;
@@ -887,6 +915,7 @@ int numDigits(int number)
 void compile(NODE* tree){
 
 	compile0(tree,0);
+
 }
 
 struct FunctionNameNode{
@@ -926,7 +955,7 @@ void printParamInstruct(void* param,int type,AssemblyContext* context);
 void printAssemInstruct(char* instruct,TacLine* line,AssemblyContext* context);
 void printAssemOperand(void* operand,int isVar,int isStr);
 void createParamData(int numOfParams);
-void compileToAssembly(NODE* tree);
+void compileToAssembly(NODE* tree,int optimize);
 
 
 void pushFunctionName(char* functionName,AssemblyContext* context){
@@ -978,65 +1007,6 @@ void popFunctionName(AssemblyContext* context){
 	}
 }
 
-/*struct AssemblyLine{
-
-	char* line;
-	struct AssemblyLine* next;
-};
-
-typedef struct AssemblyLine AssemblyLine;
-
-AssemblyLine* assemblyHead = NULL;
-
-void addAssemblyLine(char* line,...){
-
-	va_list arg;
-	int i;
-	int nargs;
-
-	for(i = 0; i < strlen(line); i++){
-
-		if(line[i] == '%'){
-
-			nargs++;
-		}
-	}
-
-	for(i = 0; i < nargs; i++){
-
-
-	}
-
-	if(assemblyHead == NULL){
-
-		assemblyHead = (AssemblyLine*)malloc(sizeof(AssemblyLine));
-		assemblyHead->next = NULL;
-		assemblyHead->line = line;
-
-	}else{
-
-		AssemblyLine* append = assemblyHead;
-
-		while(append->next != NULL){
-
-			append = append->next;
-		}
-
-		append->next = (AssemblyLine*)malloc(sizeof(AssemblyLine));
-		append->next->line = line;
-		append->next->next = NULL;
-	}
-}
-
-void printAssembly(){
-
-	AssemblyLine* next = assemblyHead;
-
-	while(next != NULL){
-
-		printf("%s",next->line);
-	}
-}*/
 
 char* getBlockNo(char* totalName){
 
@@ -1587,129 +1557,187 @@ void printAssemInstruct(char* instruct,TacLine* line,AssemblyContext* context){
 
 }
 
+//structure that represents a register name that needs to be replaced
+struct ReplaceWith{
 
-/*struct SubExpression{
-
-	char* assigned;
-	char* operand1;
-	char* operand2;
-
-	struct SubExpression* next;
+	int toReplace;
+	int replaceWith;
+	struct ReplaceWith* next;
 };
 
-typedef struct SubExpression SubExpression;
+typedef struct ReplaceWith ReplaceWith;
 
+//check if any of the element in a line need to be replaced
+//offset is which element in the list to compare the line to
+//the list is the list of registers to be replaced
+int* toReplace(ReplaceWith** list, TacLine* line,int offset){
 
-int onList(SubExpression** list,SubExpression* compare, int isSubExp){
+	ReplaceWith* next = (*list);
 
-	SubExpression* next = *list;
+	//select the element in the list to compare the line to
+	while(offset > 0 && next != NULL){
+
+		next = next->next;
+		offset--;
+	}
+
+	//if there are not that many elements in the list then return null
+	if(next == NULL){
+
+		return NULL;
+	}
+
+	//create a array of 4 elements
+	int* needToReplace = (int*)malloc(sizeof(int)*4);
 
 	while(next != NULL){
 
-		if(isSubExp && strcmp(compare->operand1,next->operand1) == 0 &&
-				strcmp(compare->operand2,next->operand2)){
+		//place the register to replace with in the last element of the array
+		needToReplace[3] = next->replaceWith;
+		//if the assigned value is register to replace then indicate that it needs replacing
+		if(line->variable != NULL && line->variable[2] - '0' == next->toReplace){
 
-			return next;
+			needToReplace[0] = 1;
 
-		}else if(!isSubExp && strcmp(compare->assigned,next->assigned) == 0){
+		}else{
 
-			return next;
+			needToReplace[0] = 0;
 		}
+
+		//if the first operand is a register that needs to be replaced then indicate that it needs replacing
+		if(line->operand1 == next->toReplace ){
+
+			needToReplace[1] = 1;
+
+		}else{
+
+			needToReplace[1] = 0;
+		}
+		//if the second operand is a register that needs to be replaced then indicate that it needs replacing
+		if(line->operand2 == next->toReplace){
+
+			needToReplace[2] = 1;
+
+		}else{
+
+			needToReplace[2] = 0;
+		}
+
+		//return the array if something has to be replaced
+		if(needToReplace[0] || needToReplace[1] || needToReplace[2]){
+
+			return needToReplace;
+
+		}else{
+
+			//otherwise keep looking though the list
+			next = next->next;
+		}
+
 	}
 
+	//if nothing needs replacing then return null
+	free(needToReplace);
 	return NULL;
 }
 
-SubExpression addToList(SubExpression** list, SubExpression* add){
+void optimizeTacCode(TacLine* first){
 
-	if(*list == NULL){
+	//create the list of registers that need to be replace
+	ReplaceWith** list = (ReplaceWith**)malloc(sizeof(ReplaceWith*));
+	(*list) = NULL;
+	TacLine* next = first;
 
-		*list = add;
-		*list->next = NULL;
+	//go though the entire TAC code
+	while(next != NULL){
 
-	}else{
+		//if there is a statement then the compiler is in a new basic block
+		if(next->isStatement > 0){
 
-		SubExpression* next = *list;
-
-		while(next->next != NULL){
-
-			next->next;
+			//clear list
+			(*list) = NULL;//small memory leak
+			next = next->next;
+			continue;
 		}
-		next->next = add;
-		next->next->next = NULL;
-	}
-}
 
-SubExpression* createSubExpression(TacLine* line){
+		//if this TAC line is a $tn = $tm statement
+		if(next->isSimple == 1 && next->isStatement == 0 &&
+				(next->variable != NULL && next->variable[0] == '$') && next->isVar1 == 1){
 
-	SubExpression* sub = (SubExpression*)malloc(sizeof(SubExpression));
+			//set this TAC line so that it is not executed by the MIPS compiler
+			next->deleteInOptimization = 1;
+			//if the list is empty then add the ReplaceWith structure to the head
+			if((*list) == NULL){
 
-	sub->assigned = line->variable;
-	getSubExpOperand(&sub->operand1,&line->operand1,line->isVar1,line->isVar1Temp);
-	getSubExpOperand(&sub->operand2,&line->operand2,line->isVar2,line->isVar2Temp);
+				//set the left hand register as the register to be replaced
+				//set the right hand register as the register to replace it with
+				(*list) = (ReplaceWith*)malloc(sizeof(ReplaceWith));
+				(*list)->toReplace = next->variable[2] - '0';
+				(*list)->replaceWith = next->operand1;
+				(*list)->next = NULL;
 
-	return sub;
+			//else add the ReplaceWith structure add the end of the list
+			}else{
 
-}
+				ReplaceWith* append = (*list);
 
-void getSubExpOperand(char** operand,void* value, int isVar,int isTemp){
+				while(append->next != NULL){
 
+					append = append->next;
+				}
 
-	if(isTemp){
+				append->next = (ReplaceWith*)malloc(sizeof(ReplaceWith));
+				append->next->toReplace = next->variable[2] - '0';
+				append->next->replaceWith = next->operand1;
+				append->next->next = NULL;
+			}
 
-		intToString("$t",*((int*)value),"",operand);
+		}else{
 
-	}else if(isVar){
+			//else compile line when compiling MIPS
+			next->deleteInOptimization = 0;
+		}
 
-		operand = (char*)value;
+		int n = 0;
+		//look though the replacement list
+		while(1){
 
-	}else{
+			//get array of replacement information
+			//n is the replacement elements that needs to be looked at next
+			//if n wasn't incremented then the toReplace would look at the same element each time
+			int* replacement = toReplace(list,next,n);
+			n++;
+			if(replacement == NULL){
 
-		atoi(*operand);
-	}
-}
-
-void optimizeBasicBlock(TacLine* first){
-
-	int noOfLines = 0;
-
-	TacLine* next = first->next;
-	SubExpression** subExps = (SubExpression**)malloc(sizeof(SubExpression*));
-	*subExps = NULL;
-	SubExpression** copy = (SubExpression**)malloc(sizeof(SubExpression*));
-	*copy = NULL;
-
-	while(next != NULL && next->isStatement != 0){
-
-		noOfLines++;
-	}
-
-	int noOfChanges = 0;
-
-	do{
-
-		int i;
-
-		TacLine* edit = first->next;
-		for(i = 0; i < noOfLines; i++){
-
-			SubExpression* sub = createSubExpression(edit);
-
-			SubExpression* same;
-			if((same = onList(subExps,sub,1)) == NULL){
-
-				//edit->variable2 = same->assigned
+				//if there is nothing to replace
+				break;
 
 			}else{
 
-				addToList(subExps,sub);
-			}
+				//replace register
+				if(replacement[0]){
 
+					next->variable[2] = replacement[3] + '0';
+				}
+
+				if(replacement[1]){
+
+					next->operand1 = replacement[3];
+				}
+
+				if(replacement[2]){
+
+					next->operand2 = replacement[3];
+				}
+			}
 		}
 
-	}while(noOfChanges > 0);
+		//move on to next tacline
+		next = next->next;
+	}
 }
-*/
+
+
 
 void printAssemOperand(void* operand,int isVar,int isStr){
 
@@ -1740,19 +1768,24 @@ void createParamData(int numOfParams){
 
 }
 
-void compileToAssembly(NODE* tree){
+void compileToAssembly(NODE* tree,int optimize){
 
 	compile0(tree,0);
+
 
 	printf("\n\n\n");
 	calculateFunctionInfo(getElement(0));
 	createParamData(getMaxParams());
 	//printFunctionInfo();
 
+	//optimizeTacCode(getElement(0));
 	printf(".text\n.globl\tmain\n");
 	printf("_main:\njal main\nli $v0,10\nsyscall\n.end _main\n");
 	AssemblyContext* context = (AssemblyContext*)malloc(sizeof(AssemblyContext));
 	//printf("malloc: %d\n",sizeof(AssemblyContext));
+	if(optimize){
+		optimizeTacCode(getElement(0));
+	}
 	context->head = NULL;
 	context->paramNo = 0;
 	//context->currentFunction = NULL;
@@ -1760,7 +1793,10 @@ void compileToAssembly(NODE* tree){
 	int i;
 	for(i = 0; i < getSize(); i++){
 
-		convertToAssembly(getElement(i),context);
+		TacLine* line = getElement(i);
+		if(line->deleteInOptimization != 1){
+			convertToAssembly(getElement(i),context);
+		}
 	}
 
 
