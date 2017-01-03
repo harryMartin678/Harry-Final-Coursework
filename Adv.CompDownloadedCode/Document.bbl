@@ -1,0 +1,9 @@
+\begin{thebibliography}{1}
+
+\bibitem{functioncloning}
+Dibyendu Das.
+\newblock Optimizing subroutines with optional parameters in f90 via function
+  cloning.
+\newblock {\em SIGPLAN Not.}, 41(8):21--28, August 2006.
+
+\end{thebibliography}

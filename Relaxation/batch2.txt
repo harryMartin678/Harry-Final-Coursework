@@ -1,0 +1,28 @@
+#!/bin/sh
+# Account & partition (must have these)
+#SBATCH --account=cm30225
+#SBATCH --partition=teaching
+# Name of job (optional)
+#SBATCH --job-name=hm474
+#SBATCH --time=00:05:00
+#SBATCH --mail-type=END
+#SBATCH --mail-user=hm474@bath.ac.uk
+# one node
+#SBATCH --nodes=1
+# any normal shell stuff
+# Run the program
+./relaxation 1 20
+./relaxation 1 100
+./relaxation 1 1000
+./relaxation 2 20
+./relaxation 2 100
+./relaxation 2 1000
+./relaxation 5 20
+./relaxation 5 100
+./relaxation 5 1000
+./relaxation 16 20
+./relaxation 16 100
+./relaxation 16 1000
+./relaxation 32 20
+./relaxation 32 100
+./relaxation 32 1000
