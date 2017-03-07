@@ -2,6 +2,7 @@ package Classification;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 
 public class FlattenedFeature {
 
@@ -34,7 +35,7 @@ public class FlattenedFeature {
 	
 	public ArrayList<Integer> getFlattenFeatures(Block[][] blocks,int index){
 		
-		ArrayList<Integer> features = new ArrayList<Integer>();
+		HashMap<Integer,Integer> featuresMap = new HashMap<Integer,Integer>();
 		
 		for(int x = 0; x < blocks.length; x++){
 			for(int y = 0; y < blocks[x].length; y++){
@@ -44,11 +45,27 @@ public class FlattenedFeature {
 					System.out.println("Block is null");
 					continue;
 				}
-				features.add(blocks[x][y].getValue()[index]);
+				//features.add(blocks[x][y].getWord());
+				if(!featuresMap.containsKey(blocks[x][y].getWord())){
+					
+					featuresMap.put(blocks[x][y].getWord(), 1);
+					
+				}else{
+					
+					featuresMap.replace(blocks[x][y].getWord(), 
+							featuresMap.get(blocks[x][y].getWord())+1);
+				}
 			}
 		}
 		
-		Collections.sort(features);
+		ArrayList<Integer> features = new ArrayList<Integer>();
+		
+		for(Integer no : featuresMap.values()){
+			
+			features.add(no);
+		}
+		
+		//Collections.sort(features);
 		
 		return features;
 	}

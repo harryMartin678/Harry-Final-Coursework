@@ -15,14 +15,20 @@ public class Block {
 	private int greenVar;
 	private int blueVar;
 	private ArrayList<Integer> flatFeature;
+	private ArrayList<int[]> pixels;
+	private int word;
+	private int noOfWord;
 	//private double cannyPerPixel;
 	//private double cannyAnglePerPixel;
 	
-	public Block(Block[][] blocks,int size,int x,int y,boolean redOnly){
+	public Block(Block[][] blocks,int size,int x,int y,boolean redOnly
+			,boolean isFirst){
 		
 		long avgRed = 0;
 		long avgGreen = 0;
 		long avgBlue = 0;
+		
+		pixels = new ArrayList<int[]>();
 		
 		flatFeature = new ArrayList<Integer>();
 		
@@ -30,6 +36,15 @@ public class Block {
 			for(int cy = y; cy < y + size; cy++){
 				
 				avgRed += blocks[cx][cy].getValue()[0];
+				
+				if(isFirst){
+					
+					pixels.add(new int[]{cx,cy});
+				
+				}else{
+					
+					pixels.addAll(blocks[cx][cy].getPixels());
+				}
 
 				if(blocks[cx][cy].getFeatures() != null){
 					flatFeature.addAll(blocks[cx][cy].getFeatures());
@@ -81,6 +96,11 @@ public class Block {
 		this.blueVar = (int)Math.sqrt(blueVar/(size*size));
 	}
 	
+	public ArrayList<int[]> getPixels() {
+		// TODO Auto-generated method stub
+		return pixels;
+	}
+
 	public ArrayList<Integer> getFeatures() {
 		// TODO Auto-generated method stub
 		return flatFeature;
@@ -97,6 +117,25 @@ public class Block {
 		// TODO Auto-generated method stub
 		return new int[]{averageRed,averageGreen,averageBlue};
 	}
+
+	public void setWord(int word) {
+		// TODO Auto-generated method stub
+		this.word = word;
+	}
 	
+	public void setNoOfWord(int noOfWord){
+		
+		this.noOfWord = noOfWord;
+	}
 	
+	public int getWord(){
+		
+		return this.word;
+	}
+
+	public int getNoOfWords() {
+		// TODO Auto-generated method stub
+		return this.noOfWord;
+	}
+
 }

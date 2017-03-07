@@ -1,6 +1,12 @@
 package Classification;
 
+import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
@@ -12,8 +18,10 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -25,6 +33,8 @@ import Util.Location;
 public class FeatureList {
 	
 	private final int IMAGE_RESOLUTION = 800;
+	private WaveClassifier classifier;
+	KMeanRegression reg;
 	
 	public FeatureList() throws MalformedURLException, IOException{
 		
@@ -37,8 +47,14 @@ public class FeatureList {
 		BufferedImage mapCanny = deepCopy(map);
 		//TreeFeature feature = new TreeFeature(map);
 		//HeirarchicalFeature feature = new HeirarchicalFeature(map);
+		CannyFeature feature = new CannyFeature(map);
 		FixedTreeFeature fixedTree = new FixedTreeFeature(map);
-		WaveClassifier classifier = new WaveClassifier(fixedTree.getObjects());
+		//fixedTree.getWordObjects();
+		//fixedTree.printWordObjects();
+		reg = new KMeanRegression(fixedTree.getWordObjects(),false);
+		//this.classifier = new WaveClassifier(fixedTree.getWordObjects());
+		
+		BufferedImage[] images = fixedTree.getImages();
 		//FlattenedFeature flattenFeature = new FlattenedFeature(fixedTree);
 		//contastImage = new int[map.getHeight()][map.getWidth()];
 		
@@ -67,13 +83,160 @@ public class FeatureList {
 		frame.setSize(1400,800);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setTitle("Image");
-		frame.getContentPane().setLayout(new GridLayout(1,2));
-		frame.getContentPane().add(new JLabel(new ImageIcon(map)));
-		frame.getContentPane().add(new JLabel(new ImageIcon(mapCanny)));
+		//JLabel mapImage = new JLabel(new ImageIcon(map));
+		//mapImage.setSize(map.getWidth(), map.getHeight());
+		//mapImage.setOpaque(false);
+		
+		ArrayList<Integer> selection = new ArrayList<Integer>();
+		
+		
+		int perRow = (int) Math.sqrt(images.length);
+		JPanel[][] panels = new JPanel[perRow][perRow];
+		frame.setLayout(new GridLayout(perRow+1,perRow));
+		
+		for(int x = 0; x < perRow; x++){
+			for(int y = 0; y < perRow; y++){
+			
+				int mx = x;
+				int my = y;
+				if(images[(x * perRow) + y] == null){
+					
+					continue;
+				}
+				JPanel next = new JPanel();
+				panels[x][y] = next;
+				next.add(new JLabel(new ImageIcon(images[(x * perRow) + y])));
+				next.addMouseListener(new MouseListener(){
+
+					private int no = (mx * perRow) + my;
+					private JPanel parent = next;
+					
+					@Override
+					public void mouseClicked(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void mouseEntered(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void mouseExited(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void mousePressed(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						//System.out.println("Pressed " + no);
+						selection.add(no);
+						parent.setBackground(Color.BLUE);
+					}
+
+					@Override
+					public void mouseReleased(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					
+				});
+				frame.getContentPane().add(next);
+			}
+		}
+		
+		JButton button = new JButton("Classify");
+		frame.getContentPane().add(button);
+		button.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+				ArrayList<ArrayList<Integer>> choices = reg.classify(selection);
+				
+				Color[] colors = new Color[]{Color.RED,Color.BLACK,Color.GREEN};
+				
+				for(int c = 0; c < choices.size(); c++){
+					for(int b = 0; b < choices.get(c).size(); b++){
+						
+						int mx = choices.get(c).get(b)/perRow;
+						int my = choices.get(c).get(b)%perRow;
+						
+						panels[mx][my].setBackground(colors[c]);
+					}
+					
+				}
+			}
+			
+			
+		});
+		
+		//selection = new int[3];
+		//noOfSelections = 0;
+		/*mapImage.addMouseListener(new MouseListener(){
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				// TODO Auto-generated method stub
+				int offsetX = frame.getWidth()/2 - (map.getWidth()/2);
+				int offsetY = frame.getHeight()/2 - (map.getHeight()/2);
+				
+				int mx = e.getX() - offsetX;
+				int my = e.getY() - offsetY;
+				
+				int selection = fixedTree.getSelectedObject(mx,my);
+				
+				if(noOfSelections < 3){
+					
+					FeatureList.this.selection[noOfSelections] = selection;
+					noOfSelections ++;
+					
+					if(noOfSelections == 3){
+						
+						FeatureList.this.classify();
+					}
+				}
+				
+				
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			
+		});*/
+		//frame.getContentPane().add(mapImage);
+		//frame.getContentPane().add(new JLabel(new ImageIcon(mapCanny)));
 		
 		frame.setVisible(true);
 	}
 	
+
 	private void extendConstast(int[][] avgDiff, BufferedImage map){
 		
 		for(int x = 0; x < map.getHeight(); x++){
